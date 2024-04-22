@@ -11,6 +11,8 @@ import boto3
 import json
 
 TABLE_CHATBOT_SAGEMAKER_ENDPOINT = "huggingface-pytorch-inference-2024-04-21-19-08-27-137"
+ACCESSID = "AKIA4MTWMI6O4STOBVEC"
+ACCESSKEY = "mKXvPNo7kj4ICnwrotsLNxe2MH7AWgSqc7REBiD9"
 
 def ask_table(message):
     # response = openai.ChatCompletion.create(
@@ -28,7 +30,10 @@ def ask_table(message):
     response = "I'm responsing"
 
 
-    client = boto3.client("sagemaker-runtime", region_name = "us-east-2")
+    client = boto3.client("sagemaker-runtime", 
+                          region_name = "us-east-2",
+                          aws_access_key_id=ACCESSID,
+                          aws_secret_access_key= ACCESSKEY)
 
     payload = {
         "inputs": {
