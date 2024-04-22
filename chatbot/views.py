@@ -1,6 +1,5 @@
 from django.shortcuts import render,redirect
 from django.http import JsonResponse
-import openai
 
 from django.contrib import auth
 from django.contrib.auth.models import User
@@ -8,23 +7,23 @@ from .models import Chat
 
 from django.utils import timezone
 
-openai_api_key = 'YOUR_API_KEY' # Replace YOUR_API_KEY with your openai apikey 
-openai.api_key = openai_api_key 
 
 def ask_openai(message):
-    response = openai.ChatCompletion.create(
-        model = "gpt-3.5-turbo-16k-0613",
-        # prompt = message,
-        # max_tokens=150,
-        # n=1,
-        # stop=None,
-        # temperature=0.7,
-        messages=[
-            {"role": "system", "content": "You are an helpful assistant."},
-            {"role": "user", "content": message},
-        ]
-    )
-    answer = response.choices[0].message.content.strip()
+    # response = openai.ChatCompletion.create(
+    #     model = "gpt-3.5-turbo-16k-0613",
+    #     # prompt = message,
+    #     # max_tokens=150,
+    #     # n=1,
+    #     # stop=None,
+    #     # temperature=0.7,
+    #     messages=[
+    #         {"role": "system", "content": "You are an helpful assistant."},
+    #         {"role": "user", "content": message},
+    #     ]
+    # )
+    response = "I'm responsing"
+    # answer = response.choices[0].message.content.strip()
+    answer = response
     return answer
 
 # Create your views here.
