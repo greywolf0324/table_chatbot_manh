@@ -7,8 +7,12 @@ from .models import Chat
 
 from django.utils import timezone
 
+import boto3
+import json
 
-def ask_openai(message):
+TABLE_CHATBOT_SAGEMAKER_ENDPOINT = "huggingface-pytorch-inference-2024-04-21-19-08-27-137"
+
+def ask_table(message):
     # response = openai.ChatCompletion.create(
     #     model = "gpt-3.5-turbo-16k-0613",
     #     # prompt = message,
@@ -22,6 +26,28 @@ def ask_openai(message):
     #     ]
     # )
     response = "I'm responsing"
+
+
+    client = boto3.client("sagemaker-runtime")
+
+    payload = {
+        "inputs": {
+        "query": message,
+        "table": {
+            "inventory": ["Omni", "Electrical appliances", "Foods"],
+            "quantity": ["11", "4512", "3934"],
+            "status": ["approved", "reported", "reported"]
+        }
+            },
+    }
+
+    response = client.invoke_endpoint(
+        EndpointName = TABLE_CHATBOT_SAGEMAKER_ENDPOINT,
+        Body = json.dumps(payload),
+        ContentType = "application/json"
+    )
+    answer = json.loads(response['Body'].read())['answer']
+    print(answer)
     # answer = response.choices[0].message.content.strip()
     answer = response
     return answer
@@ -34,7 +60,7 @@ def chatbot(request):
 
     if request.method == 'POST':
         message = request.POST.get('message')
-        response = ask_openai(message)
+        response = ask_table(message)
 
         chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
         chat.save()
