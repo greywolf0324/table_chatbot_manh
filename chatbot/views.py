@@ -67,8 +67,8 @@ def chatbot(request):
         message = request.POST.get('message')
         response = ask_table(message)
         print(response)
-        chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
-        chat.save()
+        # chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
+        # chat.save()
         return JsonResponse({'message': message, 'response': response})
     return render(request, 'chatbot.html', {'chats': chats})
 
