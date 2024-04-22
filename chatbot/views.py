@@ -28,7 +28,7 @@ def ask_table(message):
     response = "I'm responsing"
 
 
-    client = boto3.client("sagemaker-runtime")
+    client = boto3.client("sagemaker-runtime", region_name = "us-east-2")
 
     payload = {
         "inputs": {
