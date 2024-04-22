@@ -54,7 +54,7 @@ def ask_table(message):
     answer = json.loads(response['Body'].read())['answer']
     print(answer)
     # answer = response.choices[0].message.content.strip()
-    answer = response
+    # answer = response
     return answer
 
 # Create your views here.
