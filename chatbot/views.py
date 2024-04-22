@@ -39,9 +39,9 @@ def ask_table(message):
         "inputs": {
         "query": message,
         "table": {
-            "inventory": ["Omni", "Electrical appliances", "Foods"],
+            "Item": ["Omni", "Electrical appliances", "Foods"],
             "quantity": ["11", "4512", "3934"],
-            "status": ["approved", "reported", "reported"]
+            # "status": ["approved", "reported", "reported"]
         }
             },
     }
