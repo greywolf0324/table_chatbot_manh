@@ -1,3 +1,4 @@
 Django
 boto3
 langchain==0.1.16
+psycopg2-binary 
