@@ -9,11 +9,33 @@ from django.utils import timezone
 
 import boto3
 import json
+from langchain.llms.sagemaker_endpoint import SagemakerEndpoint
+from langchain.llms.sagemaker_endpoint import LLMContentHandler
+from langchain.utilities.sql_database import SQLDatabase
+from langchain.chains.sql_database.query import create_sql_query_chain
+from langchain.chains.conversation.base import ConversationChain
+from typing import Dict
+from sqlalchemy import create_engine, URL
+
 
 TABLE_CHATBOT_SAGEMAKER_ENDPOINT = "huggingface-pytorch-inference-2024-04-21-19-08-27-137"
 ACCESSID = "AKIA4MTWMI6O4STOBVEC"
 ACCESSKEY = "mKXvPNo7kj4ICnwrotsLNxe2MH7AWgSqc7REBiD9"
 
+class ContentHandler(LLMContentHandler):
+        content_type = "application/json"
+        accepts = "application/json"
+
+        def transform_input(self, prompt: str, model_kwargs: Dict) -> bytes:
+            input_str = json.dumps({"inputs": prompt, **model_kwargs})
+            print("input: ", input_str)
+            return input_str.encode("utf-8")
+
+        def transform_output(self, output: bytes) -> str:
+            response_json = json.loads(output.read().decode("utf-8"))
+            print("output: ", response_json)
+            return response_json[0]['generated_text']
+        
 def ask_table(message):
     # response = openai.ChatCompletion.create(
     #     model = "gpt-3.5-turbo-16k-0613",
@@ -62,7 +84,43 @@ def ask_table(message):
 def chatbot(request):
     # chats = Chat.objects.filter(user=request.user)
     chats = ""
+    
+    content_handler = ContentHandler()
 
+    endpoint = "huggingface-pytorch-inference-2024-04-23-07-50-29-395"
+    aws_access_key_id = "AKIA4MTWMI6O4STOBVEC"
+    aws_secret_access_key = "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"
+
+    llm = SagemakerEndpoint(
+            endpoint_name=endpoint,
+            region_name="us-east-2",
+            model_kwargs={
+                "temperature": 0,
+                "maxTokens": 4096,
+                "numResults": 3
+            },
+            content_handler=content_handler,
+            client=boto3.client(
+                "runtime.sagemaker",
+                aws_access_key_id = aws_access_key_id,
+                aws_secret_access_key = aws_secret_access_key
+            )
+        )
+
+    db_url = URL.create(
+        "postgresql",
+        username="postgres",
+        password="philgrey",
+        host="localhost",
+        port=5432,
+        database="tablecbdbs"
+    )
+
+    db = SQLDatabase.from_uri(database_uri=db_url)
+    chain = create_sql_query_chain(llm, db=db)
+
+    response = chain.invoke({"question": "How many employees are there?"})
+    print(response)
     if request.method == 'POST':
         message = request.POST.get('message')
         response = ask_table(message)
