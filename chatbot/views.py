@@ -121,7 +121,7 @@ def chatbot(request):
     chain = create_sql_query_chain(llm, db=db)
 
     response = chain.invoke({"question": "How many employees are there?"})
-    print(response, "********************************")
+    print("++++++++++++++++++++++", response, "********************************")
     if request.method == 'POST':
         message = request.POST.get('message')
         response = ask_table(message)
