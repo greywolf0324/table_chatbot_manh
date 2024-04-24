@@ -126,7 +126,7 @@ def chatbot(request):
         message = request.POST.get('message')
         # response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
         response = ask_table(message)
-        print("++++", response, "++++")
+        print("++++", type(response), "++++")
         # chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
         # chat.save()
         return JsonResponse({'message': message, 'response': response})
