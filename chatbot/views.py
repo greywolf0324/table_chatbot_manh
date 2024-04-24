@@ -17,6 +17,8 @@ from langchain.chains.sql_database.query import create_sql_query_chain
 from langchain.chains.conversation.base import ConversationChain
 from typing import Dict
 from sqlalchemy import create_engine, URL
+import re
+
 
 
 TABLE_CHATBOT_SAGEMAKER_ENDPOINT = "huggingface-pytorch-tgi-inference-2024-04-24-14-30-53-911"
@@ -133,13 +135,16 @@ def chatbot(request):
         res = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
         if 'rderline' in message:
             print(res, "---")
-            # while response.split("SQLQuery: ")[2].split("\n")[0] != "":
-            #     print(response.split("SQLQuery: ")[2].split("\n")[0])
+            # while 'information' not in response.split("SQLQuery: ")[2]:
+            #     print("retrying..............................")
             #     response = ask_table(message)
-            while 'information' not in response.split("SQLQuery: ")[2]:
-                print("retrying..............................")
-                response = ask_table(message)
-            response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
+            # response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
+            if bool(re.search(r'\d', message)):
+                while 'WHERE' not in res:
+                    response = ask_table(message)
+                    response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
+            else:
+                response = "plz specify Order ID."
         else:
             while 'WHERE' not in res:
                 response = ask_table(message)
