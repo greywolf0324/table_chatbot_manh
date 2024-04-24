@@ -80,7 +80,7 @@ def ask_table(message):
     # answer = response
     content_handler = ContentHandler()
 
-    endpoint = "huggingface-pytorch-tgi-inference-2024-04-24-14-30-53-911"
+    endpoint = "huggingface-pytorch-tgi-inference-2024-04-24-17-04-11-398"
     aws_access_key_id = "AKIA4MTWMI6O4STOBVEC"
     aws_secret_access_key = "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"
 
