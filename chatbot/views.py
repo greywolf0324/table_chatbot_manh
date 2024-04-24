@@ -132,21 +132,22 @@ def chatbot(request):
         # response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
         
         response = ask_table(message)
-        res = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
+        response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
         if 'rderline' in message:
-            print(res, "---")
+            print(response, "---")
             # while 'information' not in response.split("SQLQuery: ")[2]:
             #     print("retrying..............................")
             #     response = ask_table(message)
             # response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
             if bool(re.search(r'\d', message)):
-                while 'WHERE' not in res:
+                while 'WHERE' not in response:
                     response = ask_table(message)
-                    response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
+                    response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
+                response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0].split("#")[0]
             else:
-                response = "plz specify Order ID."
+                response = "Can you let me know Order ID?"
         else:
-            while 'WHERE' not in res:
+            while 'WHERE' not in response:
                 response = ask_table(message)
                 response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
         print("++++", type(response), "++++")
