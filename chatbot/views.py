@@ -122,10 +122,6 @@ def chatbot(request):
     # chats = Chat.objects.filter(user=request.user)
     chats = ""
     
-    
-
-    
-    print("++++++++++++++++++++++", response, "********************************")
     if request.method == 'POST':
         message = request.POST.get('message')
         # response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
