@@ -139,8 +139,9 @@ def chatbot(request):
             #     print("retrying..............................")
             #     response = ask_table(message)
             # response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
-            if bool(re.search(r'\d', message)):
-                while 'WHERE' not in response:
+            temp = re.findall("\d+", message)
+            if len(temp) != 0:
+                while not ('WHERE' in response and temp[0] in response):
                     response = ask_table(message)
                     response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
                 response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0].split("#")[0]
