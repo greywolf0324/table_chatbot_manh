@@ -19,7 +19,7 @@ from typing import Dict
 from sqlalchemy import create_engine, URL
 
 
-TABLE_CHATBOT_SAGEMAKER_ENDPOINT = "huggingface-pytorch-inference-2024-04-21-19-08-27-137"
+TABLE_CHATBOT_SAGEMAKER_ENDPOINT = "huggingface-pytorch-tgi-inference-2024-04-24-14-30-53-911"
 ACCESSID = "AKIA4MTWMI6O4STOBVEC"
 ACCESSKEY = "mKXvPNo7kj4ICnwrotsLNxe2MH7AWgSqc7REBiD9"
 
