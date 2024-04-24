@@ -49,42 +49,34 @@ def ask_table(message):
     #         {"role": "user", "content": message},
     #     ]
     # )
-    response = "I'm responsing"
+    # response = "I'm responsing"
 
 
-    client = boto3.client("sagemaker-runtime", 
-                          region_name = "us-east-2",
-                          aws_access_key_id=ACCESSID,
-                          aws_secret_access_key= ACCESSKEY)
+    # client = boto3.client("sagemaker-runtime", 
+    #                       region_name = "us-east-2",
+    #                       aws_access_key_id=ACCESSID,
+    #                       aws_secret_access_key= ACCESSKEY)
 
-    payload = {
-        "inputs": {
-        "query": message,
-        "table": {
-            "Item": ["Omni", "Electrical appliances", "Foods"],
-            "quantity": ["11", "4512", "3934"],
-            # "status": ["approved", "reported", "reported"]
-        }
-            },
-    }
+    # payload = {
+    #     "inputs": {
+    #     "query": message,
+    #     "table": {
+    #         "Item": ["Omni", "Electrical appliances", "Foods"],
+    #         "quantity": ["11", "4512", "3934"],
+    #         # "status": ["approved", "reported", "reported"]
+    #     }
+    #         },
+    # }
 
-    response = client.invoke_endpoint(
-        EndpointName = TABLE_CHATBOT_SAGEMAKER_ENDPOINT,
-        Body = json.dumps(payload),
-        ContentType = "application/json"
-    )
-    answer = json.loads(response['Body'].read())['answer']
-    print(answer)
+    # response = client.invoke_endpoint(
+    #     EndpointName = TABLE_CHATBOT_SAGEMAKER_ENDPOINT,
+    #     Body = json.dumps(payload),
+    #     ContentType = "application/json"
+    # )
+    # answer = json.loads(response['Body'].read())['answer']
+    # print(answer)
     # answer = response.choices[0].message.content.strip()
     # answer = response
-    return answer
-
-# Create your views here.
-
-def chatbot(request):
-    # chats = Chat.objects.filter(user=request.user)
-    chats = ""
-    
     content_handler = ContentHandler()
 
     endpoint = "huggingface-pytorch-tgi-inference-2024-04-24-01-23-35-845"
@@ -119,13 +111,26 @@ def chatbot(request):
 
     db = SQLDatabase.from_uri(database_uri=db_url)
     chain = create_sql_query_chain(llm, db=db)
+    print("****")
+    answer  = chain.invoke({"question": message})
+    print("****")
+    return answer
 
-    response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
+# Create your views here.
+
+def chatbot(request):
+    # chats = Chat.objects.filter(user=request.user)
+    chats = ""
+    
+    
+
+    
     print("++++++++++++++++++++++", response, "********************************")
     if request.method == 'POST':
         message = request.POST.get('message')
+        # response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
         response = ask_table(message)
-        print(response)
+        print("++++", response, "++++")
         # chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
         # chat.save()
         return JsonResponse({'message': message, 'response': response})
