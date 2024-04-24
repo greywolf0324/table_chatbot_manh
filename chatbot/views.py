@@ -87,7 +87,7 @@ def chatbot(request):
     
     content_handler = ContentHandler()
 
-    endpoint = "huggingface-pytorch-inference-2024-04-23-07-50-29-395"
+    endpoint = "huggingface-pytorch-tgi-inference-2024-04-24-01-23-35-845"
     aws_access_key_id = "AKIA4MTWMI6O4STOBVEC"
     aws_secret_access_key = "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"
 
