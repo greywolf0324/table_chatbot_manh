@@ -128,8 +128,12 @@ def chatbot(request):
     if request.method == 'POST':
         message = request.POST.get('message')
         # response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
+        
         response = ask_table(message)
         response = response.split("SQLQuery: ")[2].split("SQLResult:")[0]
+        while 'WHERE' not in response:
+            response = ask_table(message)
+            response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
         print("++++", type(response), "++++")
         # chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
         # chat.save()
