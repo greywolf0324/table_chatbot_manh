@@ -133,7 +133,7 @@ def chatbot(request):
         res = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
         if 'rderline' in message:
             print(res, "---")
-            if res == "\n":
+            if response.split("SQLQuery: ")[2].split("\n") == "":
                 while 'information' not in response.split("SQLQuery: ")[2].split("Answer: ")[1]:
                     print("retrying..............................")
                     response = ask_table(message)
