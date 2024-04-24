@@ -154,7 +154,7 @@ def chatbot(request):
                     response = ask_table(message)
                     response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
             else:
-                response = "Can you let me know Order ID?"
+                response = "Can you let me know item ID?"
         print("++++", type(response), "++++")
         # chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
         # chat.save()
