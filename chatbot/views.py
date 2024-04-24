@@ -133,7 +133,7 @@ def chatbot(request):
         
         response = ask_table(message)
         response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
-        if 'rderline' in message:
+        if 'rder' in message and 'item' not in message.lower():
             print(response, "---")
             # while 'information' not in response.split("SQLQuery: ")[2]:
             #     print("retrying..............................")
