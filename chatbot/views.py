@@ -141,14 +141,14 @@ def chatbot(request):
             # response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
             temp = re.findall("\d+", message)
             if len(temp) != 0:
-                while not ('WHERE' in response and temp[0] in response):
+                while not ('where' in response.lower() and temp[0] in response):
                     response = ask_table(message)
                     response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
                 response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0].split("#")[0]
             else:
                 response = "Can you let me know Order ID?"
         else:
-            while 'WHERE' not in response:
+            while 'where' not in response.lower():
                 response = ask_table(message)
                 response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
         print("++++", type(response), "++++")
