@@ -148,9 +148,13 @@ def chatbot(request):
             else:
                 response = "Can you let me know Order ID?"
         else:
-            while 'WHERE' not in response:
-                response = ask_table(message)
-                response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
+            temp = re.findall("\d+", message)
+            if len(temp) != 0:
+                while 'WHERE' not in response:
+                    response = ask_table(message)
+                    response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
+            else:
+                response = "Can you let me know Order ID?"
         print("++++", type(response), "++++")
         # chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
         # chat.save()
