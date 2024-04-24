@@ -120,7 +120,7 @@ def chatbot(request):
     db = SQLDatabase.from_uri(database_uri=db_url)
     chain = create_sql_query_chain(llm, db=db)
 
-    response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
+    response = chain.invoke({"question": "how many Item ITEM001 are there?"})
     print("++++++++++++++++++++++", response, "********************************")
     if request.method == 'POST':
         message = request.POST.get('message')
