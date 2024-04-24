@@ -136,7 +136,7 @@ def chatbot(request):
             # while response.split("SQLQuery: ")[2].split("\n")[0] != "":
             #     print(response.split("SQLQuery: ")[2].split("\n")[0])
             #     response = ask_table(message)
-            while 'information' not in response.split("SQLQuery: ")[2].split("Answer: ")[1]:
+            while 'information' not in response.split("SQLQuery: ")[2]:
                 print("retrying..............................")
                 response = ask_table(message)
             response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
