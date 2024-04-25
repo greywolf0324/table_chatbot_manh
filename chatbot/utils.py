@@ -49,11 +49,11 @@ class Requester:
         match kwargs["query_type"]:
             case "itemavailable":
                 if kwargs["response"]:
-                    return f"Yes, {kwargs["itemID"]} is available."
+                    return f"Yes, {kwargs['itemID']} is available."
                 else:
-                    return f"No, {kwargs["itemID"]} is not available."
+                    return f"No, {kwargs['itemID']} is not available."
             case "itemcount":
-                return f"There are {kwargs["response"]} {kwargs["itemID"]} now."
+                return f"There are {kwargs['response']} {kwargs['itemID']} now."
             case "itemorderplace":
                 if kwargs["response"]:
                     return f"Yes, you can place order."
