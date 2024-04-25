@@ -53,7 +53,7 @@ class Requester:
                 else:
                     return f"No, {kwargs['itemID']} is not available."
             case "itemcount":
-                return f"There are {kwargs['response']} {kwargs['itemID']} now."
+                return f"There are {int(kwargs['response'])} {kwargs['itemID']} now."
             case "itemorderplace":
                 if kwargs["response"]:
                     return f"Yes, you can place order."
