@@ -160,7 +160,8 @@ def chatbot(request):
                 # password: "Veridian3!"
                 # client_id: "omnicomponent.1.0.0"
                 # client_secret: "b4s8rgTyg55XYNun"
-            requester = Requester()
+            
+            message = message.lower()
             if 'item' in message and 'inventory' in message:
                 query_type = "itemavailable"
             elif 'item' in message and 'quantity' in message:
@@ -168,6 +169,7 @@ def chatbot(request):
             elif 'item' in message and 'place' in message:
                 query_type = "itemorderplace"
             
+            requester = Requester()
             detected_args = requester.sql_query_parser(response)
             print("detected args: ", detected_args)
             response = requester.itemavailability(querytype=query_type, **detected_args)
