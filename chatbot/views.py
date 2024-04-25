@@ -171,6 +171,7 @@ def chatbot(request):
             
             requester = Requester()
             detected_args = requester.sql_query_parser(response)
+            print("query_type: ", query_type)
             print("detected args: ", detected_args)
             response = requester.itemavailability(querytype=query_type, **detected_args)
 
