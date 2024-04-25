@@ -37,6 +37,29 @@ class Requester:
 
         return response.json()
     
+    def sql_query_parser(self, sql_query: str):
+        detected_args = {}
+        sql_query = sql_query.lower()
+
+        detected_args.update({"itemID": sql_query.split("where")[1].split("'")[1]})
+        
+        return detected_args
+        
+    def response_modifier(self, **kwargs):
+        match kwargs["query_type"]:
+            case "itemavailable":
+                if kwargs["response"]:
+                    return f"Yes, {kwargs["itemID"]} is available."
+                else:
+                    return f"No, {kwargs["itemID"]} is not available."
+            case "itemcount":
+                return f"There are {kwargs["response"]} {kwargs["itemID"]} now."
+            case "itemorderplace":
+                if kwargs["response"]:
+                    return f"Yes, you can place order."
+                else:
+                    return f"No, you can't place order since there aren't sufficient items"
+    
     def itemavailability(self, querytype: str, **kwargs):
         api_url = "/api/availability/beta/availabilitydetailbyview"
         body = '''{
@@ -64,16 +87,12 @@ class Requester:
         
         match querytype:
             case "itemavailable":
-                return quantity > 0
+                response =  {"query_type": querytype, "response": quantity > 0, "itemID": kwargs['itemID']}
             case "itemcount":
-                return quantity
+                response =  {"query_type": querytype, "response": quantity, "itemID": kwargs['itemID']}
             case "itemorderplace":
-                return quantity > kwargs['qty']
-            
-def sql_query_parser(sql_query: str):
-    detected_args = {}
-    sql_query = sql_query.lower()
+                response =  {"query_type": querytype, "response": quantity > kwargs['qty'], "itemID": kwargs['itemID']}
 
-    detected_args.update({"itemID": sql_query.split("where")[1].split("'")[1]})
-    
-    return detected_args
+        response = self.response_modifier(response)
+
+        return response

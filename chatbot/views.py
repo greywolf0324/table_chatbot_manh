@@ -168,7 +168,7 @@ def chatbot(request):
             elif 'item' in message and 'place' in message:
                 query_type = "itemorderplace"
             
-            detected_args = sql_query_parser(response)
+            detected_args = requester.sql_query_parser(response)
             print("detected args: ", detected_args)
             response = requester.itemavailability(querytype=query_type, **detected_args)
 
