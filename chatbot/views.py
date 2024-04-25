@@ -14,7 +14,7 @@ from langchain.utilities.sql_database import SQLDatabase
 from langchain.chains.sql_database.query import create_sql_query_chain
 from typing import Dict
 from sqlalchemy import create_engine, URL
-from chatbot.utils import Requester, sql_query_parser
+from chatbot.utils import Requester
 
 
 
