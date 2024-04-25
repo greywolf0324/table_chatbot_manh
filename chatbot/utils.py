@@ -93,6 +93,6 @@ class Requester:
             case "itemorderplace":
                 response =  {"query_type": querytype, "response": quantity > kwargs['qty'], "itemID": kwargs['itemID']}
 
-        response = self.response_modifier(response)
+        response = self.response_modifier(**response)
 
         return response
