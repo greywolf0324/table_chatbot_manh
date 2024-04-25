@@ -1,23 +1,20 @@
 from django.shortcuts import render,redirect
 from django.http import JsonResponse
-
 from django.contrib import auth
 from django.contrib.auth.models import User
-from .models import Chat
+# from .models import Chat
 
-from django.utils import timezone
-
-import boto3
+import re
 import json
+import boto3
 from langchain.llms.sagemaker_endpoint import SagemakerEndpoint
 from langchain.llms.sagemaker_endpoint import LLMContentHandler
 from langchain_core.prompts import PromptTemplate
 from langchain.utilities.sql_database import SQLDatabase
 from langchain.chains.sql_database.query import create_sql_query_chain
-from langchain.chains.conversation.base import ConversationChain
 from typing import Dict
 from sqlalchemy import create_engine, URL
-import re
+from util import Requester
 
 
 
@@ -121,11 +118,10 @@ def ask_table(message):
     print("****")
     return answer
 
-# Create your views here.
-
 def chatbot(request):
     # chats = Chat.objects.filter(user=request.user)
     chats = ""
+    default_response = "Can you let me know item ID?"
     
     if request.method == 'POST':
         message = request.POST.get('message')
@@ -133,34 +129,41 @@ def chatbot(request):
         
         response = ask_table(message)
         response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
+
+        temp = re.findall("\d+", message)
         if 'rder' in message and 'item' not in message.lower():
-            print(response, "---")
             # while 'information' not in response.split("SQLQuery: ")[2]:
             #     print("retrying..............................")
             #     response = ask_table(message)
             # response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
-            temp = re.findall("\d+", message)
             if len(temp) != 0:
                 while not ('WHERE' in response and temp[0] in response):
                     response = ask_table(message)
                     response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
                 response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0].split("#")[0]
             else:
-                response = "Can you let me know Order ID?"
+                response = default_response
         else:
-            temp = re.findall("\d+", message)
             if len(temp) != 0:
                 while 'WHERE' not in response:
                     response = ask_table(message)
                     response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
             else:
-                response = "Can you let me know item ID?"
-        print("++++", type(response), "++++")
+                response = default_response
+
         # chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
         # chat.save()
+        if response != default_response:
+            # Default Credential:
+                # username: "sme@veridian.info"
+                # password: "Veridian3!"
+                # client_id: "omnicomponent.1.0.0"
+                # client_secret: "b4s8rgTyg55XYNun"
+            requester = Requester()
+            response = requester.itemavailability(querytype="itemorderplace", itemID = "ITEM001", qty = 2500)
+            
         return JsonResponse({'message': message, 'response': response})
     return render(request, 'chatbot.html', {'chats': chats})
-
 
 def login(request):
     if request.method=='POST':
