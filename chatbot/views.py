@@ -153,6 +153,7 @@ def chatbot(request):
 
         # chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
         # chat.save()
+        print("answer: ", response)
         if response != default_response:
             # Default Credential:
                 # username: "sme@veridian.info"
@@ -161,7 +162,7 @@ def chatbot(request):
                 # client_secret: "b4s8rgTyg55XYNun"
             requester = Requester()
             response = requester.itemavailability(querytype="itemorderplace", itemID = "ITEM001", qty = 2500)
-            
+
         return JsonResponse({'message': message, 'response': response})
     return render(request, 'chatbot.html', {'chats': chats})
 
