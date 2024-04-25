@@ -69,3 +69,11 @@ class Requester:
                 return quantity
             case "itemorderplace":
                 return quantity > kwargs['qty']
+            
+def sql_query_parser(sql_query: str):
+    detected_args = {}
+    sql_query = sql_query.lower()
+
+    detected_args.update({"itemID": sql_query.split("where")[1].split("'")[1]})
+    
+    return detected_args

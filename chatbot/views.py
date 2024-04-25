@@ -14,7 +14,7 @@ from langchain.utilities.sql_database import SQLDatabase
 from langchain.chains.sql_database.query import create_sql_query_chain
 from typing import Dict
 from sqlalchemy import create_engine, URL
-from chatbot.utils import Requester
+from chatbot.utils import Requester, sql_query_parser
 
 
 
@@ -161,7 +161,16 @@ def chatbot(request):
                 # client_id: "omnicomponent.1.0.0"
                 # client_secret: "b4s8rgTyg55XYNun"
             requester = Requester()
-            response = requester.itemavailability(querytype="itemorderplace", itemID = "ITEM001", qty = 2500)
+            if 'item' in message and 'inventory' in message:
+                query_type = "itemavailable"
+            elif 'item' in message and 'quantity' in message:
+                query_type = "itemcount"
+            elif 'item' in message and 'place' in message:
+                query_type = "itemorderplace"
+            
+            detected_args = sql_query_parser(response)
+            print("detected args: ", detected_args)
+            response = requester.itemavailability(querytype=query_type, **detected_args)
 
         return JsonResponse({'message': message, 'response': response})
     return render(request, 'chatbot.html', {'chats': chats})
