@@ -113,8 +113,8 @@ def ask_table(message):
     template = '''You are a PostgreSQL expert. Given an input question, create a syntactically correct PostgreSQL query to run. Never create DELETE, DROP, UPDATE query. Only perform SELECT operation.
     Create only one SQL Query.
     Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
-    create query depending on table structure whether input value is not in table.
-    If question is about orderline and don't have any number, don't create query and ask ordername.
+    Create query depending on table structure whether input value is not in table.
+    If question don't have number of item, order or orderline, don't create SQL Query and write its title to 'Ask format'.
     Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
     Pay attention to use CURRENT_DATE function to get the current date, if the question involves "today".
     
@@ -122,6 +122,7 @@ def ask_table(message):
     
     Question: Question here
     SQLQuery: SQL Query to run
+    Ask: 'suggestion'
     
     Only use the following tables:
     {table_info}
