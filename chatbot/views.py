@@ -144,8 +144,8 @@ def chatbot(request):
         message = request.POST.get('message')
         # response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
         
-        response = ask_table(message)
-        response = response.split("SQLQuery: ")[2].split("Ask: ")[0]
+        # response = ask_table(message)
+        # response = response.split("SQLQuery: ")[2].split("Ask: ")[0]
 
         temp = re.findall("\d+", message)
         if 'rder' in message and 'item' not in message.lower():
