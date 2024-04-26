@@ -41,7 +41,7 @@ class SQL_chatbot:
         self.client_id = "omnicomponent.1.0.0"
         self.client_secret = "b4s8rgTyg55XYNun"
 
-    def message_preprocessor(default_message):
+    def message_preprocessor(self, default_message):
 
 
         return default_message
@@ -75,7 +75,7 @@ class SQL_chatbot:
     
     def request_body_generator(self, query):
         def info_getter(basic_info):
-            
+
             return 'item001'
         
         info = info_getter(query)
