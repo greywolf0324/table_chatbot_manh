@@ -154,7 +154,7 @@ def chatbot(request):
             #     response = ask_table(message)
             # response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
             # if len(temp) != 0:
-                while not ('WHERE' in response and temp[0] in response):
+                while not (temp[0] in response):
                     response = ask_table(message)
                     response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
                 response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0].split("#")[0]
@@ -162,7 +162,7 @@ def chatbot(request):
             #     response = default_response
         else:
             # if len(temp) != 0:
-                while 'WHERE' not in response:
+                # while 'WHERE' not in response:
                     response = ask_table(message)
                     response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
             # else:
