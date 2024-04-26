@@ -111,7 +111,7 @@ def ask_table(message):
 
     db = SQLDatabase.from_uri(database_uri=db_url)
     template = '''You are a PostgreSQL expert. Given an input question, create a syntactically correct PostgreSQL query to run. Never create DELETE, DROP, UPDATE query. Only perform SELECT operation.
-    Create only one SQL Query.
+    Create only {top_k} SQL Query.
     Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
     Create query depending on table structure whether input value is not in table.
     If question don't have number of item, order or orderline, don't create SQL Query and write its title to 'Ask format'.
@@ -127,9 +127,9 @@ def ask_table(message):
     Only use the following tables:
     {table_info}
     
-    Question: {input}{top_k}'''
+    Question: {input}'''
     prompt = PromptTemplate.from_template(template)
-    chain = create_sql_query_chain(llm, db=db, prompt=prompt)
+    chain = create_sql_query_chain(llm, db=db, prompt=prompt, k=1)
     print("****")
     answer  = chain.invoke({"question": message})
     print("****")
