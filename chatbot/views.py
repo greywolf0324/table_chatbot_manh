@@ -145,7 +145,7 @@ def chatbot(request):
         # response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
         
         response = ask_table(message)
-        response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
+        response = response.split("SQLQuery: ")[2].split("Ask: ")[0]
 
         temp = re.findall("\d+", message)
         if 'rder' in message and 'item' not in message.lower():
@@ -156,15 +156,15 @@ def chatbot(request):
             # if len(temp) != 0:
                 # while not (temp[0] in response):
                 response = ask_table(message)
-                response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
-                response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0].split("#")[0]
+                response = response.split("SQLQuery: ")[2].split("Ask: ")[0]
+                # response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0].split("#")[0]
             # else:
             #     response = default_response
         else:
             # if len(temp) != 0:
                 # while 'WHERE' not in response:
                     response = ask_table(message)
-                    response = response.split("SQLQuery: ")[2].split("SQLResult:")[0].split("#")[0]
+                    response = response.split("SQLQuery: ")[2].split("Ask: ")[0]
             # else:
             #     response = default_response
 
