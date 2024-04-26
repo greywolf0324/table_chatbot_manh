@@ -14,13 +14,16 @@ from langchain.utilities.sql_database import SQLDatabase
 from langchain.chains.sql_database.query import create_sql_query_chain
 from typing import Dict
 from sqlalchemy import create_engine, URL
-from chatbot.utils import Requester
+from chatbot.utils import SQL_chatbot, Requester
 
 
+chatbot = SQL_chatbot()
 
 TABLE_CHATBOT_SAGEMAKER_ENDPOINT = "huggingface-pytorch-tgi-inference-2024-04-24-14-30-53-911"
 ACCESSID = "AKIA4MTWMI6O4STOBVEC"
 ACCESSKEY = "mKXvPNo7kj4ICnwrotsLNxe2MH7AWgSqc7REBiD9"
+
+
 
 class ContentHandler(LLMContentHandler):
         content_type = "application/json"
@@ -36,47 +39,7 @@ class ContentHandler(LLMContentHandler):
             print("output: ", response_json)
             return response_json[0]['generated_text']
         
-def ask_table(message):
-    # response = openai.ChatCompletion.create(
-    #     model = "gpt-3.5-turbo-16k-0613",
-    #     # prompt = message,
-    #     # max_tokens=150,
-    #     # n=1,
-    #     # stop=None,
-    #     # temperature=0.7,
-    #     messages=[
-    #         {"role": "system", "content": "You are an helpful assistant."},
-    #         {"role": "user", "content": message},
-    #     ]
-    # )
-    # response = "I'm responsing"
-
-
-    # client = boto3.client("sagemaker-runtime", 
-    #                       region_name = "us-east-2",
-    #                       aws_access_key_id=ACCESSID,
-    #                       aws_secret_access_key= ACCESSKEY)
-
-    # payload = {
-    #     "inputs": {
-    #     "query": message,
-    #     "table": {
-    #         "Item": ["Omni", "Electrical appliances", "Foods"],
-    #         "quantity": ["11", "4512", "3934"],
-    #         # "status": ["approved", "reported", "reported"]
-    #     }
-    #         },
-    # }
-
-    # response = client.invoke_endpoint(
-    #     EndpointName = TABLE_CHATBOT_SAGEMAKER_ENDPOINT,
-    #     Body = json.dumps(payload),
-    #     ContentType = "application/json"
-    # )
-    # answer = json.loads(response['Body'].read())['answer']
-    # print(answer)
-    # answer = response.choices[0].message.content.strip()
-    # answer = response
+def ask_table_llm(message):
     content_handler = ContentHandler()
 
     endpoint = "huggingface-pytorch-tgi-inference-2024-04-24-17-04-11-398"
@@ -135,41 +98,22 @@ def ask_table(message):
     print("****")
     return answer
 
-def chatbot(request):
+def chatbot_llm(request):
     # chats = Chat.objects.filter(user=request.user)
     chats = ""
     default_response = "Can you let me know item ID?"
     
     if request.method == 'POST':
         message = request.POST.get('message')
-        # response = chain.invoke({"question": "I want to know if Item ITEM001 has inventory"})
-        
-        # response = ask_table(message)
-        # response = response.split("SQLQuery: ")[2].split("Ask: ")[0]
 
         temp = re.findall("\d+", message)
         if 'rder' in message and 'item' not in message.lower():
-            # while 'information' not in response.split("SQLQuery: ")[2]:
-            #     print("retrying..............................")
-            #     response = ask_table(message)
-            # response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
-            # if len(temp) != 0:
-                # while not (temp[0] in response):
-                response = ask_table(message)
+                response = ask_table_llm(message)
                 response = response.split("SQLQuery: ")[2].split("Ask: ")[0]
-                # response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0].split("#")[0]
-            # else:
-            #     response = default_response
         else:
-            # if len(temp) != 0:
-                # while 'WHERE' not in response:
-                    response = ask_table(message)
-                    response = response.split("SQLQuery: ")[2].split("Ask: ")[0]
-            # else:
-            #     response = default_response
+            response = ask_table_llm(message)
+            response = response.split("SQLQuery: ")[2].split("Ask: ")[0]
 
-        # chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now)
-        # chat.save()
         print("answer: ", response)
         if response != default_response:
             # Default Credential:
@@ -193,6 +137,18 @@ def chatbot(request):
             response = requester.itemavailability(querytype=query_type, **detected_args)
 
         return JsonResponse({'message': message, 'response': response})
+    return render(request, 'chatbot.html', {'chats': chats})
+
+
+
+def chatbot(request):
+    chats = ""
+    if request.method == 'POST':
+        message = request.POST.get('message')
+        answer = chatbot(message)
+
+        return JsonResponse({'message': message, 'response': answer})
+
     return render(request, 'chatbot.html', {'chats': chats})
 
 def login(request):
