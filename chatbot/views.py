@@ -142,6 +142,7 @@ def chatbot_llm(request):
 
 
 def chatbot(request):
+    print(request, "---")
     chats = ""
     if request.method == 'POST':
         message = request.POST.get('message')
