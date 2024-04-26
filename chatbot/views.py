@@ -111,7 +111,7 @@ def ask_table(message):
 
     db = SQLDatabase.from_uri(database_uri=db_url)
     template = '''You are a PostgreSQL expert. Given an input question, create a syntactically correct PostgreSQL query to run. Never create DELETE, DROP, UPDATE query. Only perform SELECT operation.
-    Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per PostgreSQL. You can order the results to return the most informative data in the database.
+    Create only one SQL Query.
     Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
     create query depending on table structure whether input value is not in table.
     If question is about orderline and don't have any number, don't create query and ask ordername.
