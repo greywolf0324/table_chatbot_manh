@@ -17,7 +17,7 @@ from sqlalchemy import create_engine, URL
 from chatbot.utils import SQL_chatbot, Requester
 
 
-chatbot = SQL_chatbot()
+bot = SQL_chatbot()
 
 TABLE_CHATBOT_SAGEMAKER_ENDPOINT = "huggingface-pytorch-tgi-inference-2024-04-24-14-30-53-911"
 ACCESSID = "AKIA4MTWMI6O4STOBVEC"
@@ -146,7 +146,7 @@ def chatbot(request):
     chats = ""
     if request.method == 'POST':
         message = request.POST.get('message')
-        answer = chatbot(message)
+        answer = bot(message)
 
         return JsonResponse({'message': message, 'response': answer})
 
