@@ -154,9 +154,9 @@ def chatbot(request):
             #     response = ask_table(message)
             # response = response.split("SQLQuery: ")[2].split("Answer: ")[1].split("\n")[0]
             # if len(temp) != 0:
-                while not (temp[0] in response):
-                    response = ask_table(message)
-                    response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
+                # while not (temp[0] in response):
+                response = ask_table(message)
+                response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0]
                 response = response.split("SQLQuery: ")[2].split("SQLResult: ")[0].split("#")[0]
             # else:
             #     response = default_response
