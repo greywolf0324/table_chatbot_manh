@@ -47,7 +47,7 @@ class SQL_chatbot:
         return default_message
     
     def table_detector(self, message):
-        detected_table = TABLES[0]
+        detected_table = TABLES["itemavailability"]
 
         return detected_table
     
