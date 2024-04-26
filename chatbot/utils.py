@@ -132,9 +132,10 @@ class SQL_chatbot:
         table = self.table_detector(processed_message)
         api_url = self.url_detector(processed_message)
         query = self.query_generator(question=processed_message, table=table)
+        print("query: ", query)
         api_request_body = self.request_body_generator(query)
         api_response = self.API_requester(api_url=api_url, body=api_request_body)
-        print(api_response)
+        print("api_response: ", api_response)
         answer = self.response_modifier(api_response)
 
         return answer
