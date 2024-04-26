@@ -146,7 +146,7 @@ def chatbot(request):
     chats = ""
     if request.method == 'POST':
         message = request.POST.get('message')
-        answer = bot(message)
+        answer = bot.chatbot(message)
 
         return JsonResponse({'message': message, 'response': answer})
 
