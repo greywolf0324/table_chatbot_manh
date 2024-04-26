@@ -1,5 +1,6 @@
-Django
+Django==5.0.4
 boto3
 langchain==0.1.16
 psycopg2-binary
-transformers
+transformers==4.40.1
+torch==2.3.0
