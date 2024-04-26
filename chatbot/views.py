@@ -127,7 +127,7 @@ def ask_table(message):
     Only use the following tables:
     {table_info}
     
-    Question: {input}'''
+    Question: {input}{top_k}'''
     prompt = PromptTemplate.from_template(template)
     chain = create_sql_query_chain(llm, db=db, prompt=prompt)
     print("****")
