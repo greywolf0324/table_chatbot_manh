@@ -90,6 +90,7 @@ class SQL_chatbot:
     def query_generator(self, question: str, table: List[str]) -> str:
         input_data = self.prepare_input(question=question, table=table)
         input_data = input_data.to(self.model.device)
+        print("*********")
         outputs = self.model.generate(inputs=input_data, num_beams=10, top_k=10, max_length=700)
         result = self.tokenizer.decode(token_ids=outputs[0], skip_special_tokens=True)
 
