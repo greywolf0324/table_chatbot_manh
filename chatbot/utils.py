@@ -51,7 +51,7 @@ class SQL_chatbot:
         return default_message
     
     def IDdetector(self, question):
-        ID = classifier(question)
+        ID = classifier(question)[0]['label']
         if ID == "maoorder" and "orderline" in question:
             ID == "orderline"
 
