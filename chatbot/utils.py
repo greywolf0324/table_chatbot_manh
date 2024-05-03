@@ -148,6 +148,7 @@ class SQL_chatbot:
     def chatbot(self, message):
         processed_message = self.message_preprocessor(message)
         ID = self.IDdetector(processed_message)
+        print(ID, "--")
         table = TABLES[ID]
         query = self.query_generator(question=processed_message, table=table)
         api_url = self.url_detector(query, ID)
