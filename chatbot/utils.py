@@ -57,18 +57,24 @@ class SQL_chatbot:
 
         return ID
     
-    def table_detector(self, message):
-        detected_table = TABLES["itemavailability"]
+    # def table_detector(self, message):
+    #     detected_table = TABLES["itemtype"]
 
-        return detected_table
+    #     return detected_table
     
-    def url_detector(self, message, ID):
+    def info_getter(self, query):
+
+        return 'item001'
+    
+    def url_detector(self, query, ID):
+        info = self.info_getter(query)
         match ID:
             case "itemtype":
                 detected_url = "https://ptnrd.omni.manh.com/inventory/api/availability/beta/availabilitydetailbyview"
-            # case "orderline":
-
-            # case "maoorder":
+            case "orderline":
+                detected_url = "https://ptnrd.omni.manh.com/omnifacade/api/customerservice/order/orderLine?page=0&size=10&sort=CreatedTimestamp%2Bdesc&query=OrderId%3D%27" + "%s%27" % info
+            case "maoorder":
+                detected_url = "https://ptnrd.omni.manh.com/omnifacade/api/customerservice/order/search/advanced"
 
         return detected_url
     
@@ -89,12 +95,8 @@ class SQL_chatbot:
 
         return result
     
-    def request_body_generator(self, query):
-        def info_getter(basic_info):
-
-            return 'item001'
-        
-        info = info_getter(query)
+    def request_body_generator(self, query):        
+        info = self.info_getter(query)
         detected_request = '''{
         "AvailabilityRequestViews": [
             {
@@ -147,8 +149,8 @@ class SQL_chatbot:
         processed_message = self.message_preprocessor(message)
         ID = self.IDdetector(processed_message)
         table = TABLES[ID]
-        api_url = self.url_detector(processed_message, ID)
         query = self.query_generator(question=processed_message, table=table)
+        api_url = self.url_detector(query, ID)
         print("query: ", query)
         api_request_body = self.request_body_generator(query)
         api_response = self.API_requester(api_url=api_url, body=api_request_body)
