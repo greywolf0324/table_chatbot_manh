@@ -1,6 +1,10 @@
+print(1)
 import requests
+print(2)
 from typing import List
+print(3)
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+print(4)
 from transformers import pipeline
 
 SITE_URL = "https://ptnrd.omni.manh.com/inventory"
@@ -11,14 +15,14 @@ TABLES = {
     "orderline": ["order", "orderline", "items", "order_status"],
     "maoorder": ["order", "order_information", "order_status"]
 }
-
+print("classifier running...")
 classifier = pipeline("sentiment-analysis", model="philgrey/my_awesome_model")
 
-API_URLS = [
-    '/api/availability/beta/availabilitydetailbyview',
-    '/omnifacade/api/customerservice/order/orderLine?page=0&size=10&sort=CreatedTimestamp%2Bdesc&query=O',
-    '{{url}}/omnifacade/api/customerservice/order/search/advanced'
-]
+# API_URLS = [
+#     '/api/availability/beta/availabilitydetailbyview',
+#     '/omnifacade/api/customerservice/order/orderLine?page=0&size=10&sort=CreatedTimestamp%2Bdesc&query=O',
+#     '{{url}}/omnifacade/api/customerservice/order/search/advanced'
+# ]
 
 REQUEST_BODIES = [
     '''{
@@ -31,15 +35,17 @@ REQUEST_BODIES = [
             }
         ],
         "Items": [
-            "%s"
+            "CSOITEM001"
         ]
         }
         ''',
 ]
 class SQL_chatbot:
     def __init__(self) -> None:
+        print("sql model running...")
         self.tokenizer = AutoTokenizer.from_pretrained("juierror/text-to-sql-with-table-schema")
         self.model = AutoModelForSeq2SeqLM.from_pretrained("juierror/text-to-sql-with-table-schema")
+        print("authentication info reading...")
         self.username = "sme@veridian.info"
         self.password = "Veridian3!"
         self.client_id = "omnicomponent.1.0.0"
@@ -99,19 +105,19 @@ class SQL_chatbot:
     def request_body_generator(self, query):        
         info = self.info_getter(query)
         detected_request = '''{
-        "AvailabilityRequestViews": [
-            {
-            "ConsiderCapacityFullLocations": true,
-            "ConsiderOutageLocations": true,
-            "IncludeStoreExclusions": true,
-            "ViewName": "US_Network"
+            "AvailabilityRequestViews": [
+                {
+                "ConsiderCapacityFullLocations": true,
+                "ConsiderOutageLocations": true,
+                "IncludeStoreExclusions": true,
+                "ViewName": "US_Network"
+                }
+            ],
+            "Items": [
+                "ITEM001"
+            ]
             }
-        ],
-        "Items": [
-            "%s"
-        ]
-        }
-        ''' % info
+        '''
 
         return detected_request
 
@@ -124,16 +130,17 @@ class SQL_chatbot:
             self.client_id = client_id
         if client_secret != None:
             self.client_secret = client_secret
-
+        print(SITE_URL)
+        print(api_url)
         response = requests.post(TOKEN_URL, data={
                                 "grant_type": "password",
                                 "username": self.username, "password": self.password},
                                 auth=(self.client_id, self.client_secret))
         response.raise_for_status()
         token = response.json()["access_token"]
-
+        print(token)
         response = requests.post(
-            url=SITE_URL + api_url,
+            url=api_url,
             data=body,
             headers={"Content-Type": "application/json",
                     'Authorization': 'Bearer ' + token
