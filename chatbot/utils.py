@@ -1,18 +1,22 @@
 import requests
 from typing import List
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import pipeline
 
 SITE_URL = "https://ptnrd.omni.manh.com/inventory"
 TOKEN_URL = "https://ptnrd-auth.omni.manh.com/oauth/token"
 
 TABLES = {
-    "itemavailability": ["item", "quantity"],
-    "orderline_summary": ["order", "orderline", "items", "order_status"],
-    "ordersearch": ["order", "order_information", "order_status"]
+    "itemtype": ["item", "quantity"],
+    "orderline": ["order", "orderline", "items", "order_status"],
+    "maoorder": ["order", "order_information", "order_status"]
 }
+
+classifier = pipeline("sentiment-analysis", model="philgrey/my_awesome_model")
+
 API_URLS = [
     '/api/availability/beta/availabilitydetailbyview',
-    '{{url}}/omnifacade/api/customerservice/order/orderLine?page=0&size=10&sort=CreatedTimestamp%2Bdesc&query=O',
+    '/omnifacade/api/customerservice/order/orderLine?page=0&size=10&sort=CreatedTimestamp%2Bdesc&query=O',
     '{{url}}/omnifacade/api/customerservice/order/search/advanced'
 ]
 
@@ -46,13 +50,25 @@ class SQL_chatbot:
 
         return default_message
     
+    def IDdetector(self, question):
+        ID = classifier(question)
+        if ID == "maoorder" and "orderline" in question:
+            ID == "orderline"
+
+        return ID
+    
     def table_detector(self, message):
         detected_table = TABLES["itemavailability"]
 
         return detected_table
     
-    def url_detector(self, message):
-        detected_url = API_URLS[0]
+    def url_detector(self, message, ID):
+        match ID:
+            case "itemtype":
+                detected_url = "https://ptnrd.omni.manh.com/inventory/api/availability/beta/availabilitydetailbyview"
+            # case "orderline":
+
+            # case "maoorder":
 
         return detected_url
     
@@ -129,8 +145,9 @@ class SQL_chatbot:
     
     def chatbot(self, message):
         processed_message = self.message_preprocessor(message)
-        table = self.table_detector(processed_message)
-        api_url = self.url_detector(processed_message)
+        ID = self.IDdetector(processed_message)
+        table = TABLES[ID]
+        api_url = self.url_detector(processed_message, ID)
         query = self.query_generator(question=processed_message, table=table)
         print("query: ", query)
         api_request_body = self.request_body_generator(query)
