@@ -6,6 +6,8 @@ print(3)
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 print(4)
 from transformers import pipeline
+import json
+import boto3
 
 SITE_URL = "https://ptnrd.omni.manh.com/inventory"
 TOKEN_URL = "https://ptnrd-auth.omni.manh.com/oauth/token"
@@ -16,7 +18,24 @@ TABLES = {
     "maoorder": ["order", "order_information", "order_status"]
 }
 print("classifier running...")
-classifier = pipeline("sentiment-analysis", model="philgrey/my_awesome_model")
+API_classifier = pipeline("sentiment-analysis", model="philgrey/my_awesome_model")
+Question_classifier = pipeline("sentiment-analysis", model="philgrey/question_classifier")
+
+message_preprocessor_prompt = """Your role is to summarize two or more sentences to one sentence while preserving all the information contained in the sentences.
+use the following format:
+
+inputs:
+what is the status of my order?
+My order js JWOrder124. Can you give me the status?
+Output:
+what is the status of order JWOrder124?
+
+inputs:
+
+"""
+
+endpoint = "huggingface-pytorch-tgi-inference-2024-05-03-18-31-17-347"
+messave_saver = ""
 
 # API_URLS = [
 #     '/api/availability/beta/availabilitydetailbyview',
@@ -40,6 +59,9 @@ REQUEST_BODIES = [
         }
         ''',
 ]
+
+
+
 class SQL_chatbot:
     def __init__(self) -> None:
         print("sql model running...")
@@ -51,13 +73,33 @@ class SQL_chatbot:
         self.client_id = "omnicomponent.1.0.0"
         self.client_secret = "b4s8rgTyg55XYNun"
 
-    def message_preprocessor(self, default_message):
+    def question_classifier(self, message):
+        match Question_classifier(message)["label"]:
+            case 'POSITIVE': return True
+            case 'NEGATIVE': return False
 
+    def message_preprocessor(self, message):
+        # LLM: "microsoft/phi-2"
+        payload = {
+            "inputs": message_preprocessor_prompt + message,
+            "parameters": {
+                "do_sample": True,
+                "top_p": 0.7,
+                "top_k": 50,
+                "temperature": 0.3,
+                "max_new_tokens": 512,
+                "repetition_penalty":1.03
+            }
+        }
 
-        return default_message
+        runtime = boto3.client("sagemaker-runtime")
+        response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
+        processed_message = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text'].split("Output:")[2].split("inputs")[0].replace("\n", "")
+
+        return processed_message
     
     def IDdetector(self, question):
-        ID = classifier(question)[0]['label']
+        ID = API_classifier(question)[0]['label']
         if ID == "maoorder" and "orderline" in question:
             ID == "orderline"
 
@@ -154,17 +196,25 @@ class SQL_chatbot:
         return API_response
     
     def chatbot(self, message):
-        processed_message = self.message_preprocessor(message)
-        ID = self.IDdetector(processed_message)
-        print(ID, "--")
-        table = TABLES[ID]
-        query = self.query_generator(question=processed_message, table=table)
-        api_url = self.url_detector(query, ID)
-        print("query: ", query)
-        api_request_body = self.request_body_generator(query)
-        api_response = self.API_requester(api_url=api_url, body=api_request_body)
-        print("api_response: ", api_response)
-        answer = self.response_modifier(api_response)
+        is_message = self.question_classifier(message)
+        if is_message:
+            messave_saver += message
+            print(messave_saver)
+            processed_message = self.message_preprocessor(messave_saver)
+            ID = self.IDdetector(processed_message)
+            print(ID, "--")
+            table = TABLES[ID]
+            query = self.query_generator(question=processed_message, table=table)
+            api_url = self.url_detector(query, ID)
+            print("query: ", query)
+            api_request_body = self.request_body_generator(query)
+            api_response = self.API_requester(api_url=api_url, body=api_request_body)
+            print("api_response: ", api_response)
+            answer = self.response_modifier(api_response)
+
+            messave_saver = ""
+        else:
+            messave_saver += message
 
         return answer
 
