@@ -35,7 +35,8 @@ inputs:
 """
 
 endpoint = "huggingface-pytorch-tgi-inference-2024-05-05-13-24-25-210"
-
+aws_access_key_id = "AKIA4MTWMI6O4STOBVEC"
+aws_secret_access_key = "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"
 
 # API_URLS = [
 #     '/api/availability/beta/availabilitydetailbyview',
@@ -93,8 +94,9 @@ class SQL_chatbot:
                 "repetition_penalty":1.03
             }
         }
-
-        runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2")
+                
+                
+        runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
         response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
         processed_message = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text'].split("Output:")[2].split("inputs")[0].replace("\n", "")
 
