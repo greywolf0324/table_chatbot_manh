@@ -35,7 +35,7 @@ inputs:
 """
 
 endpoint = "huggingface-pytorch-tgi-inference-2024-05-03-18-31-17-347"
-messave_saver = ""
+
 
 # API_URLS = [
 #     '/api/availability/beta/availabilitydetailbyview',
@@ -72,9 +72,11 @@ class SQL_chatbot:
         self.password = "Veridian3!"
         self.client_id = "omnicomponent.1.0.0"
         self.client_secret = "b4s8rgTyg55XYNun"
+        self.message_saver = ""
 
     def question_classifier(self, message):
-        match Question_classifier(message)["label"]:
+        print(Question_classifier(message))
+        match Question_classifier(message)[0]["label"]:
             case 'POSITIVE': return True
             case 'NEGATIVE': return False
 
@@ -198,9 +200,9 @@ class SQL_chatbot:
     def chatbot(self, message):
         is_message = self.question_classifier(message)
         if is_message:
-            messave_saver += message
-            print(messave_saver)
-            processed_message = self.message_preprocessor(messave_saver)
+            self.message_saver += message
+            print(self.message_saver)
+            processed_message = self.message_preprocessor(self.message_saver)
             ID = self.IDdetector(processed_message)
             print(ID, "--")
             table = TABLES[ID]
@@ -212,9 +214,9 @@ class SQL_chatbot:
             print("api_response: ", api_response)
             answer = self.response_modifier(api_response)
 
-            messave_saver = ""
+            self.message_saver = ""
         else:
-            messave_saver += message
+            self.message_saver += message
 
         return answer
 
