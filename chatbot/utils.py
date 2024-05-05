@@ -34,6 +34,20 @@ inputs:
 
 """
 
+response_modifier_prompt = """Your role is to generate description that explains basic data that user will give you.
+basic data:
+"""
+answer_modifier_prompt = """Your role is to generate US Native english from following basic data
+use the following format:
+
+inputs:
+you haven't specify item ID
+Output:
+You haven't specified the item ID.
+
+inputs:
+
+"""
 endpoint = "huggingface-pytorch-tgi-inference-2024-05-05-13-24-25-210"
 aws_access_key_id = "AKIA4MTWMI6O4STOBVEC"
 aws_secret_access_key = "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"
@@ -73,7 +87,7 @@ class SQL_chatbot:
         self.password = "Veridian3!"
         self.client_id = "omnicomponent.1.0.0"
         self.client_secret = "b4s8rgTyg55XYNun"
-        self.message_saver = ""
+        self.message_saver = []
 
     def question_classifier(self, message):
         print(Question_classifier(message))
@@ -83,28 +97,31 @@ class SQL_chatbot:
 
     def message_preprocessor(self, message):
         # LLM: "microsoft/phi-2"
-        payload = {
-            "inputs": message_preprocessor_prompt + message,
-            "parameters": {
-                "do_sample": True,
-                "top_p": 0.7,
-                "top_k": 50,
-                "temperature": 0.3,
-                "max_new_tokens": 512,
-                "repetition_penalty":1.03
+        if len(message) == 1:
+            return message
+        else:
+            payload = {
+                "inputs": message_preprocessor_prompt + message,
+                "parameters": {
+                    "do_sample": True,
+                    "top_p": 0.7,
+                    "top_k": 50,
+                    "temperature": 0.3,
+                    "max_new_tokens": 512,
+                    "repetition_penalty":1.03
+                }
             }
-        }
-                
-                
-        runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
-        response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
-        processed_message = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text'].split("Output:")[2].split("inputs")[0].replace("\n", "")
+                    
+                    
+            runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
+            response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
+            processed_message = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text'].split("Output:")[2].split("inputs")[0].replace("\n", "")
 
-        return processed_message
+            return processed_message
     
     def IDdetector(self, question):
         ID = API_classifier(question)[0]['label']
-        if ID == "maoorder" and "orderline" in question:
+        if ID == "maoorder" and "orderline" in question.lower():
             ID == "orderline"
 
         return ID
@@ -114,20 +131,27 @@ class SQL_chatbot:
 
     #     return detected_table
     
-    def info_getter(self, query):
-
-        return 'item001'
+    def info_getter(self, query, ID):
+        res = query.split("=")[1].replace(" ", "").replace(";", "")
+        # match ID:
+        #     case "itemtype":
+        #         res = query.split("=").replace(" ", "").replace(";", "")
+        #     case "orderline":
+        #         res = query.split("=").replace(" ", "").replace(";", "")
+        #     case "maoorder":
+        return res
     
     def url_detector(self, query, ID):
-        info = self.info_getter(query)
+        info = self.info_getter(query, ID)
+
         match ID:
             case "itemtype":
                 detected_url = "https://ptnrd.omni.manh.com/inventory/api/availability/beta/availabilitydetailbyview"
             case "orderline":
-                detected_url = "https://ptnrd.omni.manh.com/omnifacade/api/customerservice/order/orderLine?page=0&size=10&sort=CreatedTimestamp%2Bdesc&query=OrderId%3D%27" + "%s%27" % info
+                detected_url = "https://ptnrd.omni.manh.com/omnifacade/api/customerservice/order/orderLine?page=0&size=10&sort=CreatedTimestamp%2Bdesc&query=OrderId%3D%27" + info + "%27"
             case "maoorder":
                 detected_url = "https://ptnrd.omni.manh.com/omnifacade/api/customerservice/order/search/advanced"
-
+        print(detected_url)
         return detected_url
     
     def prepare_input(self, question: str, table: List[str]):
@@ -148,8 +172,8 @@ class SQL_chatbot:
 
         return result
     
-    def request_body_generator(self, query):        
-        info = self.info_getter(query)
+    def request_body_generator(self, query, ID):        
+        info = self.info_getter(query, ID)
         detected_request = '''{
             "AvailabilityRequestViews": [
                 {
@@ -164,10 +188,34 @@ class SQL_chatbot:
             ]
             }
         '''
-
+        info = self.info_getter(query, ID)
+        match ID:
+            case "itemtype":
+                detected_request = '''{
+                                    "AvailabilityRequestViews": [
+                                        {
+                                        "ConsiderCapacityFullLocations": true,
+                                        "ConsiderOutageLocations": true,
+                                        "IncludeStoreExclusions": true,
+                                        "ViewName": "US_Network"
+                                        }
+                                    ],
+                                    "Items": [
+                                        "%s"
+                                    ]
+                                    }
+                                ''' % info
+            case "maoorder":
+                detected_request = """{
+                                    "Query": "OrderId = '%s'",
+                                    "Page": 0,
+                                    "Size": 10
+                                }
+                            """ % info
+        print(detected_request)
         return detected_request
 
-    def API_requester(self, api_url, body, username:str = None, password:str = None, client_id:str = None, client_secret:str = None):
+    def API_requester(self, api_url, body, ID, username:str = None, password:str = None, client_id:str = None, client_secret:str = None):
         if username != None:
             self.username = username
         if password != None:
@@ -184,41 +232,108 @@ class SQL_chatbot:
                                 auth=(self.client_id, self.client_secret))
         response.raise_for_status()
         token = response.json()["access_token"]
-        print(token)
-        response = requests.post(
-            url=api_url,
-            data=body,
-            headers={"Content-Type": "application/json",
-                    'Authorization': 'Bearer ' + token
-            }
-        )
+        match ID:
+            case "itemtype":
+                response = requests.post(
+                    url=api_url,
+                    data=body,
+                    headers={"Content-Type": "application/json",
+                            'Authorization': 'Bearer ' + token
+                    }
+                )
+            case "orderline":
+                response = requests.get(
+                    url=api_url,
+                    headers={"Content-Type": "application/json",
+                            'Authorization': 'Bearer ' + token
+                    }
+                )
+            case "maoorder":
+                response = requests.post(
+                    url=api_url,
+                    data=body,
+                    headers={"Content-Type": "application/json",
+                            'Authorization': 'Bearer ' + token
+                    }
+                )
 
         return response.json()
     
-    def response_modifier(self, API_response):
+    def response_modifier(self, API_response, ID):
+        match len(API_response['data']):
+            case 0:
+                if ID == "maoorder":
+                    data = "there is no order"
+                if ID == "itemtype":
+                    data = "there is no item"
+        if len(API_response['data']) != 0:
+            data = API_response['data'][0]
+        print("data: ", data)
+        payload = {
+            "inputs": response_modifier_prompt + str(data),
+            "parameters": {
+                "do_sample": True,
+                "top_p": 0.7,
+                "top_k": 50,
+                "temperature": 0.3,
+                "max_new_tokens": 512,
+                "repetition_penalty":1.03
+            }
+        }
+                
+        runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
+        response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
+        processed_message = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text']
 
-        return API_response
+        return processed_message
     
     def chatbot(self, message):
         is_message = self.question_classifier(message)
         if is_message:
-            self.message_saver += message
+            self.message_saver.append(message)
             print(self.message_saver)
             processed_message = self.message_preprocessor(self.message_saver)
+            print("===", processed_message)
             ID = self.IDdetector(processed_message)
             print(ID, "--")
             table = TABLES[ID]
             query = self.query_generator(question=processed_message, table=table)
-            api_url = self.url_detector(query, ID)
             print("query: ", query)
-            api_request_body = self.request_body_generator(query)
-            api_response = self.API_requester(api_url=api_url, body=api_request_body)
+            api_url = self.url_detector(query, ID)
+            api_request_body = self.request_body_generator(query, ID)
+            api_response = self.API_requester(api_url=api_url, body=api_request_body, ID = ID)
             print("api_response: ", api_response)
-            answer = self.response_modifier(api_response)
+            answer = self.response_modifier(api_response, ID)
 
-            self.message_saver = ""
+            self.message_saver = []
         else:
             self.message_saver += message
+            ID = self.IDdetector("".join(self.message_saver))
+            match ID:
+                case "itemtype":
+                    answer = "you didn't specify item ID"
+                case "orderline":
+                    answer = "you didn't specify order ID"
+                case "maoorder":
+                    answer = "you didn't specify order ID"
+            payload = {
+                "inputs": answer_modifier_prompt + str(answer),
+                "parameters": {
+                    "do_sample": True,
+                    "top_p": 0.7,
+                    "top_k": 50,
+                    "temperature": 0.3,
+                    "max_new_tokens": 512,
+                    "repetition_penalty":1.03
+                }
+            }
+                    
+            runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
+            response = json.loads(runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))["Body"].read().decode("utf-8"))
+            # print(json.loads(response["Body"].read().decode("utf-8")))
+            # res = json.loads(response["Body"].read().decode("utf-8"))
+            print(response)
+            answer = response[0]['generated_text'].split("Output:")[2].split("inputs")[0]
 
         return answer
 
