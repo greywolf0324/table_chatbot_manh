@@ -26,7 +26,7 @@ use the following format:
 
 inputs:
 what is the status of my order?
-My order js JWOrder124. Can you give me the status?
+My order is JWOrder124. Can you give me the status?
 Output:
 what is the status of order JWOrder124?
 
@@ -34,7 +34,7 @@ inputs:
 
 """
 
-endpoint = "huggingface-pytorch-tgi-inference-2024-05-03-18-31-17-347"
+endpoint = "huggingface-pytorch-tgi-inference-2024-05-05-13-24-25-210"
 
 
 # API_URLS = [
