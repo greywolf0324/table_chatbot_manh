@@ -94,7 +94,7 @@ class SQL_chatbot:
             }
         }
 
-        runtime = boto3.client("sagemaker-runtime")
+        runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2")
         response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
         processed_message = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text'].split("Output:")[2].split("inputs")[0].replace("\n", "")
 
