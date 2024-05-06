@@ -90,7 +90,6 @@ class SQL_chatbot:
         self.message_saver = []
 
     def question_classifier(self, message):
-        print(Question_classifier(message))
         match Question_classifier(message)[0]["label"]:
             case 'POSITIVE': return True
             case 'NEGATIVE': return False
@@ -101,7 +100,7 @@ class SQL_chatbot:
             return message
         else:
             payload = {
-                "inputs": message_preprocessor_prompt + message,
+                "inputs": message_preprocessor_prompt + " ".join(message),
                 "parameters": {
                     "do_sample": True,
                     "top_p": 0.7,
@@ -151,7 +150,7 @@ class SQL_chatbot:
                 detected_url = "https://ptnrd.omni.manh.com/omnifacade/api/customerservice/order/orderLine?page=0&size=10&sort=CreatedTimestamp%2Bdesc&query=OrderId%3D%27" + info + "%27"
             case "maoorder":
                 detected_url = "https://ptnrd.omni.manh.com/omnifacade/api/customerservice/order/search/advanced"
-        print(detected_url)
+        print("URL: ", detected_url)
         return detected_url
     
     def prepare_input(self, question: str, table: List[str]):
@@ -174,21 +173,6 @@ class SQL_chatbot:
     
     def request_body_generator(self, query, ID):        
         info = self.info_getter(query, ID)
-        detected_request = '''{
-            "AvailabilityRequestViews": [
-                {
-                "ConsiderCapacityFullLocations": true,
-                "ConsiderOutageLocations": true,
-                "IncludeStoreExclusions": true,
-                "ViewName": "US_Network"
-                }
-            ],
-            "Items": [
-                "ITEM001"
-            ]
-            }
-        '''
-        info = self.info_getter(query, ID)
         match ID:
             case "itemtype":
                 detected_request = '''{
@@ -205,6 +189,8 @@ class SQL_chatbot:
                                     ]
                                     }
                                 ''' % info
+            case "orderline":
+                detected_request = None
             case "maoorder":
                 detected_request = """{
                                     "Query": "OrderId = '%s'",
@@ -212,7 +198,7 @@ class SQL_chatbot:
                                     "Size": 10
                                 }
                             """ % info
-        print(detected_request)
+        print("detected request: ", detected_request)
         return detected_request
 
     def API_requester(self, api_url, body, ID, username:str = None, password:str = None, client_id:str = None, client_secret:str = None):
@@ -288,14 +274,16 @@ class SQL_chatbot:
         return processed_message
     
     def chatbot(self, message):
-        is_message = self.question_classifier(message)
-        if is_message:
+        print("message: ", message)
+        To_nextstep = self.question_classifier(message)
+        print("question type: ", To_nextstep)
+        if To_nextstep:
             self.message_saver.append(message)
-            print(self.message_saver)
+            print("saved message: ", self.message_saver)
             processed_message = self.message_preprocessor(self.message_saver)
-            print("===", processed_message)
+            print("processed_message: ", processed_message)
             ID = self.IDdetector(processed_message)
-            print(ID, "--")
+            print("ID: ", ID)
             table = TABLES[ID]
             query = self.query_generator(question=processed_message, table=table)
             print("query: ", query)
@@ -303,12 +291,14 @@ class SQL_chatbot:
             api_request_body = self.request_body_generator(query, ID)
             api_response = self.API_requester(api_url=api_url, body=api_request_body, ID = ID)
             print("api_response: ", api_response)
-            answer = self.response_modifier(api_response, ID)
+            # answer = self.response_modifier(api_response, ID)
+            answer = str(api_response['data'])
 
             self.message_saver = []
         else:
             self.message_saver += message
             ID = self.IDdetector("".join(self.message_saver))
+            print("ID: ", ID)
             match ID:
                 case "itemtype":
                     answer = "you didn't specify item ID"
@@ -332,6 +322,7 @@ class SQL_chatbot:
             response = json.loads(runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))["Body"].read().decode("utf-8"))
             # print(json.loads(response["Body"].read().decode("utf-8")))
             # res = json.loads(response["Body"].read().decode("utf-8"))
+            print(type(response))
             print(response)
             answer = response[0]['generated_text'].split("Output:")[2].split("inputs")[0]
 
