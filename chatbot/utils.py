@@ -120,7 +120,7 @@ class SQL_chatbot:
     
     def IDdetector(self, question):
         ID = API_classifier(question)[0]['label']
-        if ID == "maoorder" and "orderline" in question.lower():
+        if ID == "maoorder" and "orderline" in "".join(question).lower():
             ID == "orderline"
 
         return ID
