@@ -48,7 +48,7 @@ You haven't specified the item ID.
 inputs:
 
 """
-endpoint = "huggingface-pytorch-tgi-inference-2024-05-05-13-24-25-210"
+endpoint = "huggingface-pytorch-tgi-inference-2024-05-07-17-56-11-689"
 aws_access_key_id = "AKIA4MTWMI6O4STOBVEC"
 aws_secret_access_key = "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"
 
