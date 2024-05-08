@@ -250,13 +250,12 @@ class SQL_chatbot:
         return response.json()
     
     def response_modifier(self, API_response, ID, query):
-        match len(API_response['data']):
-            case 0:
-                if ID == "maoorder":
-                    data = "there is no order"
-                if ID == "itemtype":
-                    data = "there is no item"
-        if len(API_response['data']) != 0:
+        if len(API_response['data']) == 0:
+            if ID == "maoorder":
+                data = "there is no order"
+            if ID == "itemtype":
+                data = "there is no item"
+        else:
             data = API_response['data'][0]
         print("data: ", data)
         payload = {
@@ -332,96 +331,96 @@ class SQL_chatbot:
         print("\n--------------------------------------------------------------------------------------------------------------------------\n")
         return answer
 
-class Requester:
-    def __init__(self) -> None:
-        self.username = "sme@veridian.info"
-        self.password = "Veridian3!"
-        self.client_id = "omnicomponent.1.0.0"
-        self.client_secret = "b4s8rgTyg55XYNun"
+# class Requester:
+#     def __init__(self) -> None:
+#         self.username = "sme@veridian.info"
+#         self.password = "Veridian3!"
+#         self.client_id = "omnicomponent.1.0.0"
+#         self.client_secret = "b4s8rgTyg55XYNun"
 
-    def API_requester(self, api_url, body, username:str = None, password:str = None, client_id:str = None, client_secret:str = None):
-        if username != None:
-            self.username = username
-        if password != None:
-            self.password = password
-        if client_id != None:
-            self.client_id = client_id
-        if client_secret != None:
-            self.client_secret = client_secret
+#     def API_requester(self, api_url, body, username:str = None, password:str = None, client_id:str = None, client_secret:str = None):
+#         if username != None:
+#             self.username = username
+#         if password != None:
+#             self.password = password
+#         if client_id != None:
+#             self.client_id = client_id
+#         if client_secret != None:
+#             self.client_secret = client_secret
 
-        response = requests.post(TOKEN_URL, data={
-                                "grant_type": "password",
-                                "username": self.username, "password": self.password},
-                                auth=(self.client_id, self.client_secret))
-        response.raise_for_status()
-        token = response.json()["access_token"]
+#         response = requests.post(TOKEN_URL, data={
+#                                 "grant_type": "password",
+#                                 "username": self.username, "password": self.password},
+#                                 auth=(self.client_id, self.client_secret))
+#         response.raise_for_status()
+#         token = response.json()["access_token"]
 
-        response = requests.post(
-            url=SITE_URL + api_url,
-            data=body,
-            headers={"Content-Type": "application/json",
-                    'Authorization': 'Bearer ' + token
-            }
-        )
+#         response = requests.post(
+#             url=SITE_URL + api_url,
+#             data=body,
+#             headers={"Content-Type": "application/json",
+#                     'Authorization': 'Bearer ' + token
+#             }
+#         )
 
-        return response.json()
+#         return response.json()
     
-    def sql_query_parser(self, sql_query: str):
-        detected_args = {}
-        sql_query = sql_query.lower()
+#     def sql_query_parser(self, sql_query: str):
+#         detected_args = {}
+#         sql_query = sql_query.lower()
 
-        detected_args.update({"itemID": sql_query.split("where")[1].split("'")[1]})
+#         detected_args.update({"itemID": sql_query.split("where")[1].split("'")[1]})
         
-        return detected_args
+#         return detected_args
         
-    def response_modifier(self, **kwargs):
-        match kwargs["query_type"]:
-            case "itemavailable":
-                if kwargs["response"]:
-                    return f"Yes, {kwargs['itemID']} is available."
-                else:
-                    return f"No, {kwargs['itemID']} is not available."
-            case "itemcount":
-                return f"There are {int(kwargs['response'])} {kwargs['itemID']} now."
-            case "itemorderplace":
-                if kwargs["response"]:
-                    return f"Yes, you can place order."
-                else:
-                    return f"No, you can't place order since there aren't sufficient items"
+#     def response_modifier(self, **kwargs):
+#         match kwargs["query_type"]:
+#             case "itemavailable":
+#                 if kwargs["response"]:
+#                     return f"Yes, {kwargs['itemID']} is available."
+#                 else:
+#                     return f"No, {kwargs['itemID']} is not available."
+#             case "itemcount":
+#                 return f"There are {int(kwargs['response'])} {kwargs['itemID']} now."
+#             case "itemorderplace":
+#                 if kwargs["response"]:
+#                     return f"Yes, you can place order."
+#                 else:
+#                     return f"No, you can't place order since there aren't sufficient items"
     
-    def itemavailability(self, querytype: str, **kwargs):
-        api_url = "/api/availability/beta/availabilitydetailbyview"
-        body = '''{
-        "AvailabilityRequestViews": [
-            {
-            "ConsiderCapacityFullLocations": true,
-            "ConsiderOutageLocations": true,
-            "IncludeStoreExclusions": true,
-            "ViewName": "US_Network"
-            }
-        ],
-        "Items": [
-            "%s"
-        ]
-        }
-        ''' % kwargs['itemID']
+#     def itemavailability(self, querytype: str, **kwargs):
+#         api_url = "/api/availability/beta/availabilitydetailbyview"
+#         body = '''{
+#         "AvailabilityRequestViews": [
+#             {
+#             "ConsiderCapacityFullLocations": true,
+#             "ConsiderOutageLocations": true,
+#             "IncludeStoreExclusions": true,
+#             "ViewName": "US_Network"
+#             }
+#         ],
+#         "Items": [
+#             "%s"
+#         ]
+#         }
+#         ''' % kwargs['itemID']
         
-        response = self.API_requester(api_url=api_url, body=body)
+#         response = self.API_requester(api_url=api_url, body=body)
 
-        if response['data'] == None:
-            quantity = 0
-        else:
-            quantity = response['data'][0]['TotalQuantity']
+#         if response['data'] == None:
+#             quantity = 0
+#         else:
+#             quantity = response['data'][0]['TotalQuantity']
         
         
-        match querytype:
-            case "itemavailable":
-                response =  {"query_type": querytype, "response": quantity > 0, "itemID": kwargs['itemID']}
-            case "itemcount":
-                response =  {"query_type": querytype, "response": quantity, "itemID": kwargs['itemID']}
-            case "itemorderplace":
-                response =  {"query_type": querytype, "response": quantity > kwargs['qty'], "itemID": kwargs['itemID']}
+#         match querytype:
+#             case "itemavailable":
+#                 response =  {"query_type": querytype, "response": quantity > 0, "itemID": kwargs['itemID']}
+#             case "itemcount":
+#                 response =  {"query_type": querytype, "response": quantity, "itemID": kwargs['itemID']}
+#             case "itemorderplace":
+#                 response =  {"query_type": querytype, "response": quantity > kwargs['qty'], "itemID": kwargs['itemID']}
 
-        response = self.response_modifier(**response)
+#         response = self.response_modifier(**response)
 
-        return response
+#         return response
