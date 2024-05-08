@@ -9,7 +9,6 @@ from transformers import pipeline
 import json
 import boto3
 
-SITE_URL = "https://ptnrd.omni.manh.com/inventory"
 TOKEN_URL = "https://ptnrd-auth.omni.manh.com/oauth/token"
 
 TABLES = {
@@ -104,9 +103,9 @@ class SQL_chatbot:
                 "parameters": {
                     "do_sample": True,
                     "top_p": 0.7,
-                    "top_k": 50,
+                    "top_k": 3,
                     "temperature": 0.3,
-                    "max_new_tokens": 512,
+                    "max_new_tokens": 128,
                     "repetition_penalty":1.03
                 }
             }
@@ -114,7 +113,12 @@ class SQL_chatbot:
                     
             runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
             response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
-            processed_message = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text'].split("Output:")[2].split("inputs")[0].replace("\n", "")
+            res = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text']
+            print(res)
+            try:
+                processed_message = res.split("Output:")[2].split("inputs")[0].replace("\n", "")
+            except:
+                processed_message = res.split("output:")[2].split("A:")[0].replace("\n", "")
 
             return processed_message
     
@@ -165,8 +169,8 @@ class SQL_chatbot:
     def query_generator(self, question: str, table: List[str]) -> str:
         input_data = self.prepare_input(question=question, table=table)
         input_data = input_data.to(self.model.device)
-        print("*********")
         outputs = self.model.generate(inputs=input_data, num_beams=10, top_k=10, max_length=700)
+        print(outputs)
         result = self.tokenizer.decode(token_ids=outputs[0], skip_special_tokens=True)
 
         return result
@@ -210,7 +214,7 @@ class SQL_chatbot:
             self.client_id = client_id
         if client_secret != None:
             self.client_secret = client_secret
-        print(SITE_URL)
+
         print(api_url)
         response = requests.post(TOKEN_URL, data={
                                 "grant_type": "password",
@@ -245,7 +249,7 @@ class SQL_chatbot:
 
         return response.json()
     
-    def response_modifier(self, API_response, ID):
+    def response_modifier(self, API_response, ID, query):
         match len(API_response['data']):
             case 0:
                 if ID == "maoorder":
@@ -291,12 +295,12 @@ class SQL_chatbot:
             api_request_body = self.request_body_generator(query, ID)
             api_response = self.API_requester(api_url=api_url, body=api_request_body, ID = ID)
             print("api_response: ", api_response)
-            # answer = self.response_modifier(api_response, ID)
+            answer = self.response_modifier(api_response, ID, query)
             answer = str(api_response['data'])
 
             self.message_saver = []
         else:
-            self.message_saver += message
+            self.message_saver.append(message)
             ID = self.IDdetector("".join(self.message_saver))
             print("ID: ", ID)
             match ID:
@@ -325,7 +329,7 @@ class SQL_chatbot:
             print(type(response))
             print(response)
             answer = response[0]['generated_text'].split("Output:")[2].split("inputs")[0]
-
+        print("\n--------------------------------------------------------------------------------------------------------------------------\n")
         return answer
 
 class Requester:
