@@ -317,9 +317,9 @@ class SQL_chatbot:
                 print(1)
                 if content == "order_status":
                     print(1)
-                    response_data = dict((k, data[k]) for k in ('CreatedTimestamp', 'FulfillmentStatus', 'OrderTotal') if k in data)
+                    self.response_data = dict((k, data[k]) for k in ('CreatedTimestamp', 'FulfillmentStatus', 'OrderTotal') if k in data)
             payload = {
-                "inputs": response_modifier_prompt + str(response_data) + "\nresponse:\n",
+                "inputs": response_modifier_prompt + str(self.response_data) + "\nresponse:\n",
                 "parameters": {
                     "do_sample": True,
                     "top_p": 0.7,
