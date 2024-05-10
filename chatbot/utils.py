@@ -8,6 +8,7 @@ print(4)
 from transformers import pipeline
 import json
 import boto3
+from typing import Dict
 
 TOKEN_URL = "https://ptnrd-auth.omni.manh.com/oauth/token"
 
@@ -20,7 +21,7 @@ print("classifier running...")
 API_classifier = pipeline("sentiment-analysis", model="philgrey/my_awesome_model")
 Question_classifier = pipeline("sentiment-analysis", model="philgrey/question_classifier")
 
-message_preprocessor_prompt = """Your role is to summarize two or more sentences to one sentence while preserving all the information contained in the sentences.
+message_preprocessor_prompt = """Your role is to get one sentence by summarizing two or more sentences while preserving all the information contained in the inputs.
 use the following format:
 
 inputs:
@@ -32,11 +33,39 @@ what is the status of order JWOrder124?
 inputs:
 
 """
+no_order_prompt = """You are professional virtual assistant that answers to User's question.
+All question answering will be done following format.
 
-response_modifier_prompt = """Your role is to generate description that explains basic data that user will give you.
-basic data:
+input:
+User's question
+output:
+your answer
+
+input:
+write simple response in American English stating that there is no order.
+output:
+
 """
-answer_modifier_prompt = """Your role is to generate US Native english from following basic data
+
+no_item_prompt = """You are professional virtual assistant that answers to User's question.
+All question answering will be done following format.
+
+input:
+User's question
+output:
+your answer
+
+input:
+write simple response in American English stating that there is no item.
+output:
+
+"""
+
+response_modifier_prompt = """Your role is to generate description that explains basic data user will give you.
+basic data:
+
+"""
+answer_modifier_prompt = """Your role is to generate US Native english from following basic data. All grammar has to be perfect. 
 use the following format:
 
 inputs:
@@ -45,11 +74,12 @@ Output:
 You haven't specified the item ID.
 
 inputs:
-
 """
-endpoint = "huggingface-pytorch-tgi-inference-2024-05-07-17-56-11-689"
+endpoint = "huggingface-pytorch-tgi-inference-2024-05-10-14-53-22-247"
 aws_access_key_id = "AKIA4MTWMI6O4STOBVEC"
 aws_secret_access_key = "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"
+
+runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
 
 # API_URLS = [
 #     '/api/availability/beta/availabilitydetailbyview',
@@ -94,12 +124,13 @@ class SQL_chatbot:
             case 'NEGATIVE': return False
 
     def message_preprocessor(self, message):
-        # LLM: "microsoft/phi-2"
+        # LLM: "HuggingFaceH4/zephyr-7b-beta"
+        print("message: ", message)
         if len(message) == 1:
             return message
         else:
             payload = {
-                "inputs": message_preprocessor_prompt + " ".join(message),
+                "inputs": message_preprocessor_prompt + message + "\nOutput: ",
                 "parameters": {
                     "do_sample": True,
                     "top_p": 0.7,
@@ -111,12 +142,13 @@ class SQL_chatbot:
             }
                     
                     
-            runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
+            
             response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
             res = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text']
             print(res)
             try:
                 processed_message = res.split("Output:")[2].split("inputs")[0].replace("\n", "")
+                # processed_message = res[12]
             except:
                 processed_message = res.split("output:")[2].split("A:")[0].replace("\n", "")
 
@@ -249,31 +281,58 @@ class SQL_chatbot:
 
         return response.json()
     
-    def response_modifier(self, API_response, ID, query):
+    def response_modifier(self, API_response: Dict, ID, query: str):
+        content = query.lower().split("select ")[1].split("from")[0].replace(" ", "")
+        print("ID: ", ID, "--")
+        print("content: ", content, "--")
+
         if len(API_response['data']) == 0:
-            if ID == "maoorder":
-                data = "there is no order"
-            if ID == "itemtype":
-                data = "there is no item"
+            if ID == "maoorder" or ID == "orderline":
+                prompt = no_order_prompt
+            elif ID == "itemtype":
+                prompt = no_item_prompt
+            
+            payload = {
+                "inputs": prompt,
+                "parameters": {
+                    "do_sample": True,
+                    "top_p": 0.7,
+                    "top_k": 3,
+                    "temperature": 0.3,
+                    "max_new_tokens": 128,
+                    "repetition_penalty":1.03
+                }
+            }
+                    
+            response = json.loads(runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))["Body"].read().decode("utf-8"))
+
+            print("final response: ", response)
+            processed_message = response[0]['generated_text'].split("\n")[12]
         else:
             data = API_response['data'][0]
-        print("data: ", data)
-        payload = {
-            "inputs": response_modifier_prompt + str(data),
-            "parameters": {
-                "do_sample": True,
-                "top_p": 0.7,
-                "top_k": 50,
-                "temperature": 0.3,
-                "max_new_tokens": 512,
-                "repetition_penalty":1.03
+            print("data: ", data)
+            if content == "order_status":
+                print(1)
+            if ID == "maoorder":
+                print(1)
+                if content == "order_status":
+                    print(1)
+                    response_data = dict((k, data[k]) for k in ('CreatedTimestamp', 'FulfillmentStatus', 'OrderTotal') if k in data)
+            payload = {
+                "inputs": response_modifier_prompt + str(response_data) + "\nresponse:\n",
+                "parameters": {
+                    "do_sample": True,
+                    "top_p": 0.7,
+                    "top_k": 50,
+                    "temperature": 0.3,
+                    "max_new_tokens": 512,
+                    "repetition_penalty":1.03
+                }
             }
-        }
-                
-        runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
-        response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
-        processed_message = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text']
-
+                    
+            response = json.loads(runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))["Body"].read().decode("utf-8"))
+            processed_message = response[0]['generated_text'].split('response:')[1].replace("\n", "")
+            print("answer: ", processed_message)
         return processed_message
     
     def chatbot(self, message):
@@ -283,7 +342,7 @@ class SQL_chatbot:
         if To_nextstep:
             self.message_saver.append(message)
             print("saved message: ", self.message_saver)
-            processed_message = self.message_preprocessor(self.message_saver)
+            processed_message = self.message_preprocessor(" ".join(self.message_saver))
             print("processed_message: ", processed_message)
             ID = self.IDdetector(processed_message)
             print("ID: ", ID)
@@ -295,7 +354,7 @@ class SQL_chatbot:
             api_response = self.API_requester(api_url=api_url, body=api_request_body, ID = ID)
             print("api_response: ", api_response)
             answer = self.response_modifier(api_response, ID, query)
-            answer = str(api_response['data'])
+            # answer = str(api_response['data'])
 
             self.message_saver = []
         else:
@@ -321,13 +380,12 @@ class SQL_chatbot:
                 }
             }
                     
-            runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
             response = json.loads(runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))["Body"].read().decode("utf-8"))
             # print(json.loads(response["Body"].read().decode("utf-8")))
             # res = json.loads(response["Body"].read().decode("utf-8"))
             print(type(response))
             print(response)
-            answer = response[0]['generated_text'].split("Output:")[2].split("inputs")[0]
+            answer = response[0]['generated_text'].split("\n")[11]
         print("\n--------------------------------------------------------------------------------------------------------------------------\n")
         return answer
 
