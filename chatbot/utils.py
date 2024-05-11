@@ -43,6 +43,7 @@ class SQL_chatbot:
         self.message_saver = []
 
     def llmanswer_getter(self, input):
+        print(input)
         payload = {
             "inputs": input,
             "parameters": {
@@ -57,15 +58,13 @@ class SQL_chatbot:
                     
         response = runtime.invoke_endpoint(EndpointName = endpoint, ContentType = "application/json", Body = json.dumps(payload))
         response = json.loads(response["Body"].read().decode("utf-8"))[0]['generated_text']
-        print(response)
+
         i = 0
         processed_message = response.split("Output:")[2].split("\n")[0]
-        print(processed_message, "--")
         length = len(processed_message)
         while not length:
             i += 1
             processed_message = response.split("Output:")[2].split("\n")[i]
-            print(processed_message, "--")
             length = len(processed_message)
         
         return processed_message
@@ -81,23 +80,23 @@ class SQL_chatbot:
             return message
         else:
             processed_message = self.llmanswer_getter(message_preprocessor_prompt + message + "\nOutput:\n")
-
+            print("processed_message: ", processed_message)
             return processed_message
     
     def IDdetector(self, question):
-        ID = API_classifier(question)[0]['label']
-        if ID == "maoorder" and "orderline" in "".join(question).lower():
-            ID == "orderline"
+        self.ID = API_classifier(question)[0]['label']
+        if self.ID == "maoorder" and "orderline" in "".join(question).lower():
+            self.ID == "orderline"
 
-        return ID
+        return self.ID
     
-    def info_getter(self, query, ID):
+    def info_getter(self, query):
         return query.split("=")[1].replace(" ", "").replace(";", "")
     
-    def url_detector(self, query, ID):
-        info = self.info_getter(query, ID)
+    def url_detector(self, query):
+        info = self.info_getter(query)
 
-        match ID:
+        match self.ID:
             case "itemtype":
                 detected_url = BASICURL_ITEMTYPE
             case "orderline":
@@ -120,12 +119,12 @@ class SQL_chatbot:
         input_data = input_data.to(self.model.device)
         outputs = self.model.generate(inputs=input_data, num_beams=10, top_k=10, max_length=700)
         result = self.tokenizer.decode(token_ids=outputs[0], skip_special_tokens=True)
-
+        print("query: ", result)
         return result
     
-    def request_body_generator(self, query, ID):        
-        info = self.info_getter(query, ID)
-        match ID:
+    def request_body_generator(self, query):        
+        info = self.info_getter(query)
+        match self.ID:
             case "itemtype":
                 detected_request = '''{
                                     "AvailabilityRequestViews": [
@@ -150,9 +149,10 @@ class SQL_chatbot:
                                     "Size": 10
                                 }
                             """ % info
+        print(detected_request)
         return detected_request
 
-    def API_requester(self, api_url, body, ID, username:str = None, password:str = None, client_id:str = None, client_secret:str = None):
+    def API_requester(self, api_url, body, username:str = None, password:str = None, client_id:str = None, client_secret:str = None):
         if username != None:
             self.username = username
         if password != None:
@@ -168,7 +168,7 @@ class SQL_chatbot:
                                 auth=(self.client_id, self.client_secret))
         response.raise_for_status()
         token = response.json()["access_token"]
-        match ID:
+        match self.ID:
             case "itemtype":
                 response = requests.post(
                     url=api_url,
@@ -195,22 +195,34 @@ class SQL_chatbot:
 
         return response.json()
     
-    def response_modifier(self, API_response: Dict, ID, query: str):
+    def response_modifier(self, API_response: Dict, query: str):
         content = query.lower().split("select ")[1].split("from")[0].replace(" ", "")
-
+        print(content, "--")
         if len(API_response['data']) == 0:
-            if ID == "maoorder" or ID == "orderline":
+            if self.ID == "maoorder" or self.ID == "orderline":
                 prompt = no_order_prompt
-            elif ID == "itemtype":
+            elif self.ID == "itemtype":
                 prompt = no_item_prompt
             processed_message = self.llmanswer_getter(answer_modifier_prompt + prompt + "\nOutput:\n")
         else:
             data = API_response['data'][0]
-            if ID == "maoorder":
+            if self.ID == "maoorder":
                 if content == "order_status":
-                    self.response_data = dict((k, data[k]) for k in ('CreatedTimestamp', 'FulfillmentStatus', 'OrderTotal') if k in data)
-
-            processed_message = self.llmanswer_getter(response_modifier_prompt + str(self.response_data) + "\nOutput:\n",)
+                    response_data = dict((k, data[k]) for k in ('CreatedTimestamp', 'FulfillmentStatus', 'OrderTotal') if k in data)
+            elif self.ID == "orderline":
+                if content == "order_status":
+                    response_data = dict((k, data[k]) for k in ('CreatedTimestamp', 'FulfillmentStatus', 'OrderLineTotal') if k in data)
+                elif content == "items":
+                    response_data = {"Item": data['ItemId']}
+                    # response_data = dict((k, data[k]) for k in ('ItemId') if k in data)
+                    print(response_data)
+            elif self.ID == "itemtype":
+                print(1)
+                if content == "quantity":
+                    print(1)
+                    response_data = {"quantity": int(data['TotalQuantity'])}
+            print(data)
+            processed_message = self.llmanswer_getter(response_modifier_prompt + str(response_data) + "\nOutput:\n")
             
         return processed_message
     
@@ -220,20 +232,21 @@ class SQL_chatbot:
             self.message_saver.append(message)
 
             processed_message   = self.message_preprocessor(" ".join(self.message_saver))
-            ID                  = self.IDdetector(processed_message)
-            table               = TABLES[ID]
+            if len(self.message_saver) == 1:
+                self.ID         = self.IDdetector(processed_message)
+            table               = TABLES[self.ID]
             query               = self.query_generator(question=processed_message, table=table)
-            api_url             = self.url_detector(query, ID)
-            api_request_body    = self.request_body_generator(query, ID)
-            api_response        = self.API_requester(api_url=api_url, body=api_request_body, ID = ID)
-            answer              = self.response_modifier(api_response, ID, query)
+            api_url             = self.url_detector(query)
+            api_request_body    = self.request_body_generator(query)
+            api_response        = self.API_requester(api_url=api_url, body=api_request_body)
+            answer              = self.response_modifier(api_response, query)
 
             self.message_saver = []
         else:
-            self.message_saver.append(message)
+            self.message_saver.append(self.message_preprocessor(message))
 
-            ID = self.IDdetector("".join(self.message_saver))
-            match ID:
+            self.ID = self.IDdetector("".join(self.message_saver))
+            match self.ID:
                 case "itemtype":
                     answer = no_item_answer
                 case "orderline":

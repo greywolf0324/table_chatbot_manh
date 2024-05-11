@@ -1,6 +1,9 @@
 
 
 message_preprocessor_prompt = """Your role is to get one sentence by summarizing two or more sentences while preserving all the information contained in the inputs.
+You have to remove unnecessary information as much as possible.
+for example, if input is "I want to know get the status of an Order using the Advanced Summary Search", you can summarize it as "I want to know get the status of an Order" by removing "Advanced Summary Search".
+
 use the following format:
 
 inputs:
@@ -46,7 +49,7 @@ here are some requirements:
 use following format:
 
 input:
-User's question
+User's input
 Output:
 your answer
 
