@@ -27,8 +27,8 @@ from chatbot.config import(
     BASICURL_MAOORDER,
 )
 
-API_classifier = pipeline("sentiment-analysis", model="philgrey/my_awesome_model")
 Question_classifier = pipeline("sentiment-analysis", model="philgrey/question_classifier")
+API_classifier = pipeline("sentiment-analysis", model="philgrey/my_awesome_model")
 
 runtime = boto3.client("sagemaker-runtime", region_name = "us-east-2", aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
 
@@ -203,7 +203,7 @@ class SQL_chatbot:
                 prompt = no_order_prompt
             elif ID == "itemtype":
                 prompt = no_item_prompt
-            processed_message = self.llmanswer_getter(prompt)
+            processed_message = self.llmanswer_getter(answer_modifier_prompt + prompt + "\nOutput:\n")
         else:
             data = API_response['data'][0]
             if ID == "maoorder":

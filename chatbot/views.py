@@ -25,19 +25,19 @@ bot = SQL_chatbot()
 
 
 
-class ContentHandler(LLMContentHandler):
-        content_type = "application/json"
-        accepts = "application/json"
+# class ContentHandler(LLMContentHandler):
+#         content_type = "application/json"
+#         accepts = "application/json"
 
-        def transform_input(self, prompt: str, model_kwargs: Dict) -> bytes:
-            input_str = json.dumps({"inputs": prompt, **model_kwargs})
-            print("input: ", input_str)
-            return input_str.encode("utf-8")
+#         def transform_input(self, prompt: str, model_kwargs: Dict) -> bytes:
+#             input_str = json.dumps({"inputs": prompt, **model_kwargs})
+#             print("input: ", input_str)
+#             return input_str.encode("utf-8")
 
-        def transform_output(self, output: bytes) -> str:
-            response_json = json.loads(output.read().decode("utf-8"))
-            print("output: ", response_json)
-            return response_json[0]['generated_text']
+#         def transform_output(self, output: bytes) -> str:
+#             response_json = json.loads(output.read().decode("utf-8"))
+#             print("output: ", response_json)
+#             return response_json[0]['generated_text']
         
 # def ask_table_llm(message):
 #     content_handler = ContentHandler()
@@ -142,7 +142,6 @@ class ContentHandler(LLMContentHandler):
 
 
 def chatbot(request):
-    print(request, type(request), "---")
     chats = ""
     if request.method == 'POST':
         message = request.POST.get('message')
