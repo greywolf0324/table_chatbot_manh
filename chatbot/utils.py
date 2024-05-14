@@ -41,6 +41,7 @@ class SQL_chatbot:
         self.client_id = CLIENT_ID
         self.client_secret = CLIENT_SECRET
         self.message_saver = []
+        self.itemqty = None
 
     def llmanswer_getter(self, input):
         print(input)
@@ -91,10 +92,32 @@ class SQL_chatbot:
         return self.ID
     
     def info_getter(self, query):
-        return query.split("=")[1].replace(" ", "").replace(";", "")
+        def lastone_getter(st: str, direct = None):
+            if direct:
+                k = 0
+            else:
+                k = -1
+            lis = st.split(" ")
+            while not lis[k]:
+                lis.pop(k)
+            return lis[k]
+        
+        if self.ID == "itemtype" and len(query.split("=")) == 3:
+            res = []
+            type_1 = lastone_getter(query.split("=")[0])
+            if type_1 == "item":
+                return [lastone_getter(query.split("=")[1], direct=True), lastone_getter(query.split("=")[2], direct=True)]
+            else:
+                return [lastone_getter(query.split("=")[2], direct=True), lastone_getter(query.split("=")[1], direct=True)]
+        else:
+            return [lastone_getter(query.split("=")[1], direct=True)]
     
     def url_detector(self, query):
-        info = self.info_getter(query)
+        if self.ID == "itemtype" and len(query.split("=")) == 3:
+            info = self.info_getter(query)[0]
+            self.itemqty = self.info_getter(query)[1]
+        else:
+            info = self.info_getter(query)[0]
 
         match self.ID:
             case "itemtype":
@@ -192,13 +215,13 @@ class SQL_chatbot:
                             'Authorization': 'Bearer ' + token
                     }
                 )
-
+        print(response.json())
         return response.json()
     
     def response_modifier(self, API_response: Dict, query: str):
         content = query.lower().split("select ")[1].split("from")[0].replace(" ", "")
         print(content, "--")
-        if len(API_response['data']) == 0:
+        if not API_response['data']:
             if self.ID == "maoorder" or self.ID == "orderline":
                 prompt = no_order_prompt
             elif self.ID == "itemtype":
