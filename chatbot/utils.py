@@ -147,7 +147,7 @@ class SQL_chatbot:
         return result
     
     def request_body_generator(self, query):        
-        info = self.info_getter(query)
+        info = self.info_getter(query)[0]
         match self.ID:
             case "itemtype":
                 detected_request = '''{
@@ -233,9 +233,11 @@ class SQL_chatbot:
             if self.ID == "maoorder":
                 if content == "order_status":
                     response_data = dict((k, data[k]) for k in ('CreatedTimestamp', 'FulfillmentStatus', 'OrderTotal') if k in data)
+                    response_data["CreatedTimestamp"] = response_data["CreatedTimestamp"].replace("T", ":")
             elif self.ID == "orderline":
                 if content == "order_status":
                     response_data = dict((k, data[k]) for k in ('CreatedTimestamp', 'FulfillmentStatus', 'OrderLineTotal') if k in data)
+                    response_data["CreatedTimestamp"] = response_data["CreatedTimestamp"].replace("T", ":")
                 elif content == "items":
                     response_data = {"Item": data['ItemId']}
                     # response_data = dict((k, data[k]) for k in ('ItemId') if k in data)

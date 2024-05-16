@@ -43,7 +43,6 @@ output:
 
 response_modifier_prompt = """Your role is to generate output that explains input user will give you.
 here are some requirements:
- - when you explain about the date, convert it to a presentable form.
  - when you explain about the item ID or order ID, don't explain it with implicit form like 'x'. specify it like 'this order' or 'this item'.
 
 use following format:
