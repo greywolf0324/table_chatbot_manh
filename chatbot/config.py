@@ -68,7 +68,7 @@ inputs:
 no_item_answer = "you didn't specify item ID"
 no_order_answer = "you didn't specify order ID"
 
-endpoint = "huggingface-pytorch-tgi-inference-2024-05-14-18-30-44-176"
+endpoint = "huggingface-pytorch-tgi-inference-2024-05-16-16-07-01-817"
 aws_access_key_id = "AKIA4MTWMI6O4STOBVEC"
 aws_secret_access_key = "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"
 

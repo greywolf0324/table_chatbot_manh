@@ -126,6 +126,7 @@ class SQL_chatbot:
                 detected_url = BASICURL_ORDERLINE + info + "%27"
             case "maoorder":
                 detected_url = BASICURL_MAOORDER
+        print("-->", detected_url)
         return detected_url
     
     def prepare_input(self, question: str, table: List[str]):
@@ -172,7 +173,7 @@ class SQL_chatbot:
                                     "Size": 10
                                 }
                             """ % info
-        print(detected_request)
+        print("-->", detected_request)
         return detected_request
 
     def API_requester(self, api_url, body, username:str = None, password:str = None, client_id:str = None, client_secret:str = None):
